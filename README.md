@@ -205,7 +205,7 @@ veth1     Link encap:Ethernet  HWaddr 5e:56:e9:e8:82:56
           RX bytes:3195 (3.1 KB)  TX bytes:2882 (2.8 KB)
 ```
 
-# **br_add** -- Add a kernel bridge
+# **br_add** -- Create a kernel bridge
 ```
 br_add br1
 ```
@@ -218,6 +218,41 @@ br_del br1
 # **br_addif** -- Add an interface to a bridge
 ```
 br_addif bridge interface
+```
+Example:
+
+Assume you want to create the following network.
+```
+  +-----+ ns1-br1    br1-ns1 +-----+ br1-ns2    ns2-br1 +-----+
+  | ns1 +--------------------+ br1 +--------------------+ ns2 |
+  +-----+ 172.16.1.1/24      +-----+      172.16.1.2/24 +-----+
+          2001:0:0:1::1/64             2001:0:0:1::2/64
+```
+Type the following commands.
+```
+# . ./namespace-shell-funcs
+# ns_add ns1 ns2                          # Add two namespafes: ns1, ns2
+adding ns1
+adding ns2
+# vif_add ns1-br1 br1-ns1                 # Create two veths: ns1-br1, br1-ns1
+# vif_add ns2-br1 br1-ns2                 # Create two veths: ns2-br1, br1-ns2
+# ns_add_if ns1 ns1-br1                   # Add ns1-br1 to ns1
+# ns_add_if ns2 ns2-br1                   # Add ns2-br1 to ns2
+# ns_add_ifaddr ns1 ns1-br1 172.16.1.1/24 # Add 172.16.1.1/24 to ns1-br1
+# ns_add_ifaddr ns2 ns2-br1 172.16.1.2/24 # Add 172.16.1.2/24 to ns2-br1
+# br_add br1                              # Create kernel bridge: br1
+# br_addif br1 br1-ns1                    # Add br1-ns1 to br1
+# br_addif br1 br1-ns2                    # Add br1-ns2 to br1
+#
+# ns_exec ns1 ping 172.16.1.2
+PING 172.16.1.2 (172.16.1.2) 56(84) bytes of data.
+64 bytes from 172.16.1.2: icmp_seq=1 ttl=64 time=0.040 ms
+64 bytes from 172.16.1.2: icmp_seq=2 ttl=64 time=0.049 ms
+64 bytes from 172.16.1.2: icmp_seq=3 ttl=64 time=0.039 ms
+^C
+--- 172.16.1.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2047ms
+rtt min/avg/max/mdev = 0.039/0.042/0.049/0.008 ms
 ```
 
 # **br_delif** -- Delete an interface from a bridge
