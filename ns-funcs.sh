@@ -147,7 +147,7 @@ vif_peer_index () {
 }
 
 #
-# ns_add_ifaddr: attach an IPv4/IPv6 address to
+# ns_add_ifaddr: Attach an IPv4/IPv6 address to
 #                the specified interface and namespace
 #
 #  ns_add_ifaddr ns1 eth1 2001:0:0:1::1/64 8192
@@ -177,7 +177,7 @@ ns_add_ifaddr () {
 }
 
 #
-# ns_flush_ifaddr: delete all IPv4/IPv6 addresses from
+# ns_flush_ifaddr: Delete all IPv4/IPv6 addresses from
 #                the interface in the specified namespace
 #
 #  ns_flush_ifaddr ns1 eth1
@@ -197,7 +197,7 @@ ns_flush_ifaddr () {
   return $rc
 }
 
-# ns_exec: execute a command in the specified namespace
+# ns_exec: Execute a command in the specified namespace
 #
 #  ns_exec ns1 cmd [...]
 #
@@ -216,7 +216,7 @@ ns_exec () {
 }
 
 #
-# br_add: add a bridge
+# br_add: Create a kernel bridge
 #
 #  br_add br1
 #
@@ -239,7 +239,7 @@ br_add () {
 }
 
 #
-# br_del: delete a bridge
+# br_del: Delete a kernel bridge
 #
 #  br_del br1
 #
