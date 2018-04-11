@@ -6,6 +6,7 @@ A set of shell functions working with Linux Namespace
 * **ns_del**:          Delete namespaces
 * **ns_add_if**:       Add an interface to namespace
 * **vif_add**:         Create a pair of veth interfaces
+* **vif_add_pair**:    Create a pair of veth interfaces from interface names
 * **vif_del**:         Delete a (pair of) veth interface(s)
 * **vif_peer_index**:  Return peer vif's ifindex
 * **ns_add_ifaddr**:   Attach an IPv4/IPv6 address to the specified interface and namespace
@@ -54,6 +55,20 @@ Example:
 ```
 # . ./namespace-shell-funcs
 # vif_add veth1 veth2
+#
+```
+
+### **vif_add_pair** -- Create a pair of veth interfaces from interface names
+```
+vif_add_pair if1 if2
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# vif_add_pair if1 if2
+# ip link | grep if1
+7: if2-if1@if1-if2: ...
+8: if1-if2@if2-if1: ...
 #
 ```
 
