@@ -129,6 +129,25 @@ vif_del () {
 }
 
 #
+# vif_add_pair: Add the following pair of veth interfaces
+#
+#  vif_add_pair host1 host2
+#
+#     host1-host2 <---> host2-host1
+#
+#
+vif_add_pair () {
+  rc=0
+  if [ $# -ge 2 ]; then
+    if1="${1}-${2}"
+    if2="${2}-${1}"
+    vif_add "$if1" "$if2" || rc=$?
+  fi
+
+  return $rc
+}
+
+#
 # vif_peer_index: Get peer vif's ifindex
 #
 #  vif_peer_index veth1
