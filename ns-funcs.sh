@@ -129,11 +129,11 @@ vif_del () {
 }
 
 #
-# vif_add_pair: Add the following pair of veth interfaces
+# vif_add_pair: Create a pair of veth interfaces from interface names
 #
-#  vif_add_pair host1 host2
+#  vif_add_pair if1 if2
 #
-#     host1-host2 <---> host2-host1
+#    if1-if2 <---> if2-if1
 #
 #
 vif_add_pair () {
@@ -142,6 +142,9 @@ vif_add_pair () {
     if1="${1}-${2}"
     if2="${2}-${1}"
     vif_add "$if1" "$if2" || rc=$?
+  else
+    echo "vif_add_pair(): Error: too few args: $*" 1>&2
+    return 1
   fi
 
   return $rc
