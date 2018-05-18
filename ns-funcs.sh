@@ -245,7 +245,7 @@ ns_list () {
   ip netns
 }
 
-# ns_runsh: run a shell ($SHELL unless specified) in the given namespace
+# ns_runsh: Run a shell ($SHELL unless specified) in the given namespace
 #
 #  ns_runsh ns1 [shell]
 #
@@ -268,7 +268,7 @@ ns_runsh () {
   return $rc
 }
 
-# ns_where: Show the current namespae in which the shell is running
+# ns_where: Show the namespae in which the shell is running
 #
 #  ns_where
 #
