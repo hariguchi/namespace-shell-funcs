@@ -5,12 +5,15 @@ A set of shell functions working with Linux Namespace
 * **ns_add**:          Add namespaces
 * **ns_del**:          Delete namespaces
 * **ns_add_if**:       Add an interface to namespace
+* **ns_add_ifaddr**:   Attach an IPv4/IPv6 address to the specified interface and namespace
+* **ns_flush_ifaddr**: Delete all IPv4/IPv6 addresses from the interface in the specified namespace
+* **ns_list**:         Show all the existing namespaces
+* **ns_runsh**:        Run a shell in the given namespace
+* **ns_where**:        Show the namespace in which the shell is running
 * **vif_add**:         Create a pair of veth interfaces
 * **vif_add_pair**:    Create a pair of veth interfaces from interface names
 * **vif_del**:         Delete a (pair of) veth interface(s)
 * **vif_peer_index**:  Return peer vif's ifindex
-* **ns_add_ifaddr**:   Attach an IPv4/IPv6 address to the specified interface and namespace
-* **ns_flush_ifaddr**: Delete all IPv4/IPv6 addresses from the interface in the specified namespace
 * **ns_exec**:         Execute a command in the specified namespace
 * **br_add**:          Add a kernel bridge
 * **br_del**:          Delete a kernel bridge
@@ -218,6 +221,43 @@ veth1     Link encap:Ethernet  HWaddr 5e:56:e9:e8:82:56
           TX packets:26 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000 
           RX bytes:3195 (3.1 KB)  TX bytes:2882 (2.8 KB)
+```
+
+### **ns_list** -- Show all the existing namespaces
+```
+ns_list
+```
+
+### **ns_where** -- Show the namespace in which the shell is running
+```
+ns_where
+```
+
+### **ns_runsh** -- Run a shell in the given namespace
+```
+ns_runsh ns1 [shell]
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# ns_add ns1 ns2      # Add two namespafes: ns1, ns2
+adding ns1
+adding ns2
+# ns_runsh ns1
+# ns_where
+ns_where: command not found
+# . ./namespace-shell-funcs
+# ns_where
+ns1
+# exit
+# ns_runsh ns2 tcsh
+# . ./namespace-shell-funcs
+/usr/bin/.: Permission denied.
+# ip netns identify
+ns2
+# exit
+# ns_where
+#
 ```
 
 # **br_add** -- Create a kernel bridge
