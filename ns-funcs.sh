@@ -237,6 +237,45 @@ ns_exec () {
   return $rc
 }
 
+# ns_list: Show all the existing namespaces
+#
+#  ns_list
+#
+ns_list () {
+  ip netns
+}
+
+# ns_runsh: run a shell ($SHELL unless specified) in the given namespace
+#
+#  ns_runsh ns1 [shell]
+#
+ns_runsh () {
+  rc=0
+  if [ $# -ge 1 ]; then
+    ns=$1
+    shift
+    if [ $# -ge 1 ]; then
+      shell=$1
+    else
+      shell=$SHELL
+    fi
+    ip netns exec $ns $shell || rc=$?
+  else
+    echo "ns_runsh: Usage: ns_runsh <namespace> [shell]" 1>&2
+    rc=1
+  fi
+
+  return $rc
+}
+
+# ns_where: Show the current namespae in which the shell is running
+#
+#  ns_where
+#
+ns_where () {
+  ip netns identify
+}
+
 #
 # br_add: Create a kernel bridge
 #
