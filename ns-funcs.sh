@@ -70,6 +70,25 @@ ns_add_if () {
 }
 
 #
+# ns_del_if: Delete an interface from namespace
+#
+#  ns_del_if ns1 eth1
+#
+ns_del_if () {
+  rc=0
+  if [ $# -ge 2 ]; then
+    ns=$1
+    intf=$2
+    ip netns exec $ns ip link set $2 netns 1 || rc=$?
+  else
+    echo "ns_del_if(): Error: too few args: $*" 1>&2
+    rc=1
+  fi
+
+  return $rc
+}
+
+#
 # vif_add: Add a pair of veth interfaces
 #
 #  vif_add veth1 veth2
