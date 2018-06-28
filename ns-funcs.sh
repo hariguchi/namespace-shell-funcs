@@ -298,7 +298,7 @@ ns_where () {
 #
 # add_ifaddr: Attach an IPv4/IPv6 address to the specified interface
 #
-#  ns_add_ifaddr eth1 2001:0:0:1::1/64 8192
+#  add_ifaddr eth1 2001:0:0:1::1/64 8192
 #
 add_ifaddr () {
   rc=0
