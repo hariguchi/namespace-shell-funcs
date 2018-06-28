@@ -62,7 +62,7 @@ ns_add_if () {
     ip link set $intf netns $ns up || rc=$?
     ip netns exec $ns ifconfig lo 127.0.0.1/8 up || rc=$?
   else
-    echo "ns_add_if(): Error: too few args: $*" 1>&2
+    echo 'Usage: ns_add_if <namespace> <interface>' 1>&2
     rc=1
   fi
 
@@ -81,7 +81,7 @@ ns_del_if () {
     intf=$2
     ip netns exec $ns ip link set $2 netns 1 || rc=$?
   else
-    echo "ns_del_if(): Error: too few args: $*" 1>&2
+    echo 'Usage: ns_del_if <namespace> <interface>' 1>&2
     rc=1
   fi
 
@@ -116,7 +116,7 @@ vif_add () {
       echo "vif_add(): $1 already exists" 1>&2
     fi
   else
-    echo "vif_add(): Error: too few args: $*" 1>&2
+    echo 'Usage: vif_add <veth1> <veth2>' 1>&2
     rc=1
   fi
 
@@ -137,10 +137,10 @@ vif_del () {
         echo "vif_del(): Error: failed to delete $1" 1>&2
       fi
     else
-      echo "vif_del(): $1 does not exist" 1>&2
+      echo "vif_del(): Error: $1 does not exist" 1>&2
     fi
   else
-    echo "vif_del(): Error: too few args: $*" 1>&2
+    echo 'Usage: vif_del <veth>' 1>&2
     rc=1
   fi
 
@@ -162,7 +162,7 @@ vif_add_pair () {
     if2="${2}-${1}"
     vif_add "$if1" "$if2" || rc=$?
   else
-    echo "vif_add_pair(): Error: too few args: $*" 1>&2
+    echo 'Usage: vif_add_pair <interface1> <interface2>' 1>&2
     return 1
   fi
 
@@ -177,7 +177,7 @@ vif_add_pair () {
 vif_peer_index () {
   rc=0
   if [ $# -lt 1 ]; then 
-    echo "vif_peer_index(): Error: too few args: $*" 1>&2
+    echo 'Usage: vif_peer_index <veth>' 1>&2
     return 1
   fi
   _out=`ethtool -S $1 2> /dev/null`
@@ -196,7 +196,7 @@ vif_peer_index () {
 ns_add_ifaddr () {
   rc=0
   if [ $# -lt 3 ]; then 
-    echo "ns_add_ifaddr(): Error: too few args: $*" 1>&2
+    echo 'Usage: ns_add_ifaddr <namespace> <interface> <IP-address>' 1>&2
     return 1
   fi
 
@@ -211,7 +211,6 @@ ns_add_ifaddr () {
   if [ $# -ge 4 ]; then
     ip netns exec $ns ip link set dev $intf mtu $4 || rc=$?
   fi
-  ip netns exec $ns ip $ver addr flush dev $intf || rc=$?
   ip netns exec $ns ip addr add $ipa dev $intf || rc=$?
 
   return $rc
@@ -231,7 +230,7 @@ ns_flush_ifaddr () {
     ip netns exec $ns ip -4 addr flush dev $intf || rc=$?
     ip netns exec $ns ip -6 addr flush dev $intf || rc=$?
   else
-    echo "ns_flush_ifaddr(): Error: too few args: $*" 1>&2
+    echo 'Usage: ns_flush_ifaddr <namespace> <interface>' 1>&2
     rc=1
   fi
 
@@ -249,7 +248,7 @@ ns_exec () {
     shift
     ip netns exec $ns $* || rc=$?
   else
-    echo "ns_exec(): Error: too few args: $*" 1>&2
+    echo 'Usage: ns_exec <namespace> <command> [...]' 1>&2
     rc=1
   fi
 
@@ -280,19 +279,66 @@ ns_runsh () {
     fi
     ip netns exec $ns $shell || rc=$?
   else
-    echo "ns_runsh: Usage: ns_runsh <namespace> [shell]" 1>&2
+    echo 'ns_runsh: Usage: ns_runsh <namespace> [shell]' 1>&2
     rc=1
   fi
 
   return $rc
 }
 
+#
 # ns_where: Show the namespae in which the shell is running
 #
 #  ns_where
 #
 ns_where () {
   ip netns identify
+}
+
+#
+# add_ifaddr: Attach an IPv4/IPv6 address to the specified interface
+#
+#  ns_add_ifaddr eth1 2001:0:0:1::1/64 8192
+#
+add_ifaddr () {
+  rc=0
+  if [ $# -lt 2 ]; then 
+    echo 'Usage: add_ifaddr <interface> <IP-address> [mtu]' 1>&2
+    return 1
+  fi
+
+  intf=$1
+  ipa=$2
+  if echo $ipa | grep ':' > /dev/null ; then
+    ver="-6"
+  else
+    ver="-4"
+  fi
+  if [ $# -ge 3 ]; then
+    ip link set dev $intf mtu $3 || rc=$?
+  fi
+  ip addr add $ipa dev $intf || rc=$?
+
+  return $rc
+}
+
+#
+# flush_ifaddr: Delete all IPv4/IPv6 addresses from the specified interface
+#
+#  flush_ifaddr eth1
+#
+flush_ifaddr () {
+  rc=0
+  if [ $# -ge 1 ]; then
+    intf=$1
+    ip -4 addr flush dev $intf || rc=$?
+    ip -6 addr flush dev $intf || rc=$?
+  else
+    echo 'Usage: flush_ifaddr <interface>' 1>&2
+    rc=1
+  fi
+
+  return $rc
 }
 
 #
@@ -313,6 +359,9 @@ br_add () {
     else
       echo "br_add(): bridge $1 already exists" 1>&2
     fi
+  else
+    echo "Usage: br_add <bridge-name>" 1>&2
+    rc=1
   fi
 
   return $rc
@@ -341,9 +390,9 @@ br_del () {
 }
 
 #
-# br_addif: Add an interface to a bridge
+# br_add_if: Add an interface to a bridge
 #
-#  br_addif br1 intf
+#  br_add_if br1 intf
 #
 br_addif () {
   rc=0
@@ -356,29 +405,35 @@ br_addif () {
       fi
     fi
   else
-    echo "br_addif(): Error: too few args: $*" 1>&2
+    echo 'Usage: br_addif <bridge> <interface>' 1>&2
   fi
 
   return $rc
 }
+br_add_if() {
+  br_addif $*
+}
 
 #
-# br_delif: Delete an interface from a bridge
+# br_del_if: Delete an interface from a bridge
 #
-#  br_delif br1 intf
+#  br_del_if br1 intf
 #
 br_delif () {
   rc=0
   if [ $# -ge 2 ]; then
     brctl delif "$1" "$2" || rc=1
     if [ $rc -ne 0 ]; then
-      echo "br_delif(): Error: failed to delete interface $2 from bridge $1" 1>&2
+      echo "br_delif(): Error: failed to delete intf $2 from bridge $1" 1>&2
     fi
   else
-    echo "br_delif(): Error: too few args: $*" 1>&2
+    echo 'Usage: br_delif <bridge> <interface>' 1>&2
   fi
 
   return $rc
+}
+br_del_if () {
+  br_delif $*
 }
 
 #
@@ -394,6 +449,6 @@ pci2if () {
     fi
     echo `ls /sys/bus/pci/devices/${prefix}$1/net`
   else
-    echo "pci2if(): Error: too few args: $*" 1>&2
+    echo 'Usage: pci2if <0000:01:00.1>' 1>&2
   fi
 }

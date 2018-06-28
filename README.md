@@ -5,20 +5,23 @@ A set of shell functions working with Linux Namespace
 * **ns_add**:          Add namespaces
 * **ns_del**:          Delete namespaces
 * **ns_add_if**:       Add an interface to namespace
+* **ns_del_if**:       Delete an interface from namespace
 * **ns_add_ifaddr**:   Attach an IPv4/IPv6 address to the specified interface and namespace
 * **ns_flush_ifaddr**: Delete all IPv4/IPv6 addresses from the interface in the specified namespace
 * **ns_list**:         Show all the existing namespaces
+* **ns_exec**:         Execute a command in the specified namespace
 * **ns_runsh**:        Run a shell in the given namespace
 * **ns_where**:        Show the namespace in which the shell is running
 * **vif_add**:         Create a pair of veth interfaces
 * **vif_add_pair**:    Create a pair of veth interfaces from interface names
 * **vif_del**:         Delete a (pair of) veth interface(s)
 * **vif_peer_index**:  Return peer vif's ifindex
-* **ns_exec**:         Execute a command in the specified namespace
+* **add_ifaddr**:      Attach an IPv4/IPv6 address to the specified interface
+* **flush_ifaddr**:    Delete all IPv4/IPv6 addresses from the specified interface
 * **br_add**:          Add a kernel bridge
 * **br_del**:          Delete a kernel bridge
-* **br_addif**:        Add an interface to a bridge
-* **br_delif**:        Delete an interface from a bridge
+* **br_add_if**:       Add an interface to a bridge
+* **br_del_if**:       Delete an interface from a bridge
 * **pci2if**:          Convert pci address to interface name
 
 
@@ -48,6 +51,19 @@ Example:
 adding ns1
 # ns_add_if ns1 eth1
 #
+```
+
+### **ns_del_if** -- Delete an interface from namespace
+```
+ns_del_if namespace interface
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# ns_add ns1
+adding ns1
+# ns_add_if ns1 eth1
+# ns_del_if ns1 eth1
 ```
 
 ### **vif_add** -- Create a pair of veth interfaces
@@ -270,9 +286,9 @@ br_add br1
 br_del br1
 ```
 
-# **br_addif** -- Add an interface to a bridge
+# **br_add_if** -- Add an interface to a bridge
 ```
-br_addif bridge interface
+br_add_if bridge interface
 ```
 Example:
 
@@ -296,8 +312,8 @@ adding ns2
 # ns_add_ifaddr ns1 ns1-br1 172.16.1.1/24 # Add 172.16.1.1/24 to ns1-br1
 # ns_add_ifaddr ns2 ns2-br1 172.16.1.2/24 # Add 172.16.1.2/24 to ns2-br1
 # br_add br1                              # Create kernel bridge: br1
-# br_addif br1 br1-ns1                    # Add br1-ns1 to br1
-# br_addif br1 br1-ns2                    # Add br1-ns2 to br1
+# br_add_if br1 br1-ns1                   # Add br1-ns1 to br1
+# br_add_if br1 br1-ns2                   # Add br1-ns2 to br1
 #
 # ns_exec ns1 ping 172.16.1.2
 PING 172.16.1.2 (172.16.1.2) 56(84) bytes of data.
@@ -310,9 +326,9 @@ PING 172.16.1.2 (172.16.1.2) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.039/0.042/0.049/0.008 ms
 ```
 
-# **br_delif** -- Delete an interface from a bridge
+# **br_del_if** -- Delete an interface from a bridge
 ```
-br_delif bridge interface
+br_del_if bridge interface
 ```
 
 # **pci2if** -- Convert pci address to interface name
