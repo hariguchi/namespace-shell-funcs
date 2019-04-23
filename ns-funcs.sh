@@ -7,23 +7,46 @@
 
 #
 # ns_add: Add namespaces
+#         -f: delete namesape if already exist
 #
-#   ns_add ns1 [ns2 ...]
+#   ns_add [-f] ns1 [ns2 ...]
 #
 ns_add () {
   rc=0
-  for ns in $*
+  while [ $# -gt 0 ]
   do
-    if [ -f /var/run/netns/$ns ]; then
-      #
-      # Wipe out the namespace if it already exists
-      #
-      ip netns del $ns || rc=$?
-      sleep 1
-    fi
-    echo "adding $ns"
-    ip netns add $ns || rc=$?
+    case $1 in
+    -f) _wipeout=1
+        ;;
+     *) break
+        ;;
+    esac
+    shift
   done
+  if [ -n "$_wipeout" ]; then
+    for ns in $*
+    do
+      if [ -f /var/run/netns/$ns ]; then
+        #
+        # Wipe out the namespace if it already exists
+        #
+        ip netns del $ns || rc=$?
+        sleep 1
+      fi
+      echo "adding $ns"
+      ip netns add $ns || rc=$?
+    done
+  else
+    for ns in $*
+    do
+      if [ -f /var/run/netns/$ns ]; then
+        echo "namespace $ns already exists" 1>&2
+      else
+        echo "adding $ns"
+        ip netns add $ns || rc=$?
+      fi
+    done
+  fi
   return $rc
 }
 
@@ -452,3 +475,129 @@ pci2if () {
     echo 'Usage: pci2if <0000:01:00.1>' 1>&2
   fi
 }
+
+#
+# addrFromPrefix: Output IP address from IP prefix. This function works
+#                 even if the input has no prefix length.
+#
+#  addrFromPrefix <prefix>
+#
+#
+addrFromPrefix () {
+  if [ $# -lt 1 ]; then
+    return 1
+  fi
+  echo $1 | cut -f 1 -d'/'
+}
+
+#
+# lenFromPrefix: Output prefix length if the input has a prefix length.
+#                Output -1 if unless input has a prefix length.
+#
+#  lenFromPrefix <prefix>
+#
+#
+lenFromPrefix () {
+  if [ $# -lt 1 ]; then
+    return 1
+  fi
+  if echo $1 | grep '/' > /dev/null ; then
+    echo $1 | cut -f 2 -d'/'
+  else
+    echo "-1"
+    return 1
+  fi
+}
+
+#
+# changeDir: Go to directory <dir>.
+#            Directories are created unless they exist.
+#
+#  changeDir <dir>
+#
+#
+changeDir () {
+  _curDir=`pwd`
+
+  if [ "`echo $1 | cut -c1`" = "/" ]; then
+    cd /
+  fi
+  for _dir in `echo $1 | sed 's@/@ @g'`
+  do
+    if [ ! -d  $_dir ]; then
+      if ! mkdir $_dir ; then
+        cd $_curDir
+        return 1
+      fi
+    fi
+    cd $_dir
+  done
+
+  return 0
+}
+
+#
+# makeDir: Make directory <dir>. The path <dir> can be relative or absolute.
+#          New drirectories are created if necessary.
+#
+#  makeDir <dir>
+#
+makeDir () {
+  _curDir=`pwd`
+
+  if [ "`echo $1 | cut -c1`" = "/" ]; then
+    cd /
+  fi
+  for _dir in `echo $1 | sed 's@/@ @g'`
+  do
+    if [ ! -d $_dir ]; then
+      if ! mkdir $_dir ; then
+        echo "makeDir: ERROR: failed to create $_dir" 1>&2
+        cd $_curDir
+        return 1
+      fi
+    fi
+    cd $_dir
+  done
+
+  cd $_curDir
+  return 0
+}
+
+#
+# prependZero: Prepend 0 if 'num' is between 0 and 9 (e.g., 00, 01, ..., 09)
+#              Do nothing otherwise (e.g., 12, 120, etc.)
+#
+#  prependZero <num>
+#
+prependZero () {
+  if echo $1 | egrep '^[0-9]+' > /dev/null ; then
+    _num=`expr $1 + 0`
+    if [ $_num -lt 10 ]; then
+      echo "0$_num"
+    else
+      echo $_num
+    fi
+  else
+    echo $1
+  fi
+}
+
+#
+# errExit "message" [code]
+#
+errExit () {
+  _code=1
+  case $# in
+  0) echo "ERROR:" 1>&2
+     ;;
+  1) echo "ERROR: $1" 1>&2
+     ;;
+  *) echo "ERROR: $1" 1>&2
+     echo "$2" | grep '^[0-9]*$'  > /dev/null && _code=$2
+     ;;
+  esac
+
+  exit $_code
+}
+

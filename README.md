@@ -23,14 +23,24 @@ A set of shell functions working with Linux Namespace
 * **br_add_if**:       Add an interface to a bridge
 * **br_del_if**:       Delete an interface from a bridge
 * **pci2if**:          Convert pci address to interface name
+* **addrFromPrefix**   Output IP address from IP prefix
+* **lenFromPrefix**    Output prefix length from IP prefix
+* **changeDir**        Change directory with creating new ones if necessary
+* **makeDir**          Make a directory with creating new ones if necessary
+* **prependZero**      Prepend 0 to a single digit input (0..9)
+* **errExit**          Output an error message and exit
 
 
 ## Functions
 
 ### **ns_add** -- Add namespaces
 ```
-ns_add ns1 [ns2 ...]
+ns_add [-f] ns1 [ns2 ...]
 ```
+Add namespace(s). If there is a namespace having the same
+names in the parameter, it is deleted first, then a new
+namespace with the same name is created if `-f' (force) option
+is used.
 
 ### **ns_del** -- Delete namespaces
 ```
@@ -342,3 +352,109 @@ Example:
 enp0s8
 #
 ```
+
+# **addrFromPrefix** -- Output IP address from IP prefix
+```
+addFromPrefix ip_prefix
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# addFromPrefix 1.2.3.4/24
+1.2.3.4
+
+# addFromPrefix 1.2.3.4
+1.2.3.4
+#
+```
+
+# **lenFromPrefix** -- Output prefix length from IP prefix
+```
+lenFromPrefix ip_prefix
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# lenFromPrefix 1.2.3.4/24
+24
+
+# lenFromPrefix 1.2.3.4
+-1
+#
+```
+
+### **changeDir** -- Change directory with creating new ones if necessary
+```
+changeDir directory
+```
+Go to the specified directory. changeDir creates new
+directories if it is necessary to go to the specified directory.
+
+Example:
+```
+# . ./namespace-shell-funcs
+# cd /tmp
+# changeDir foo/bar
+# pwd
+/tmp/foo/bar
+#
+```
+
+### **makeDir** -- Make a directory with creating new ones if necessary
+```
+makeDir directory
+```
+Make the specified directory. makeDir creates new
+directories if it is necessary to make the specified directory.
+
+Example:
+```
+# . ./namespace-shell-funcs
+# cd /tmp
+# makeeDir foo/bar/baz
+# pwd
+/tmp
+# find foo
+foo
+foo/bar
+foo/bar/baz
+#
+```
+
+### **prependZero** -- Prepend 0 to a single digit input (0..9)
+```
+prependZero number
+```
+Prepend '0' to a single digit (0, 1, .., 9). It does nothing unless
+the input is a single digit number
+
+Example:
+```
+# . ./namespace-shell-funcs
+# prependZero 1
+01
+# prependZero 100
+100
+# prependZero foo
+foo
+#
+```
+
+### **errExit** -- Output an error message and exit
+```
+errExit "error message" [exit_code]
+```
+Output the specified error message and exit with the specified
+exit code. The exit code is 1 unless it is specified.
+
+Example:
+```
+# . ./namespace-shell-funcs
+# errExit "This should not happen" 10
+ERROR: This should not happen
+exit
+# echo $?
+10
+#
+```
+
