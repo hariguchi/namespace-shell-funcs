@@ -387,6 +387,13 @@ br_add () {
     rc=1
   fi
 
+  #
+  # Disable bridge iptables
+  #
+  if [ -f /proc/sys/net/bridge/bridge-nf-call-iptables ]; then
+    /bin/echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables
+  fi
+
   return $rc
 }
 
