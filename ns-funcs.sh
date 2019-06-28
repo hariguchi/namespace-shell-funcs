@@ -219,22 +219,40 @@ vif_peer_index () {
 ns_add_ifaddr () {
   rc=0
   if [ $# -lt 3 ]; then 
-    echo 'Usage: ns_add_ifaddr <namespace> <interface> <IP-address>' 1>&2
+    echo 'Usage: ns_add_ifaddr <namespace> <interface> <IP-address> [mtu]' 1>&2
     return 1
   fi
 
   ns=$1
   intf=$2
   ipa=$3
-  if echo $ipa | grep ':' > /dev/null ; then
-    ver="-6"
-  else
-    ver="-4"
-  fi
   if [ $# -ge 4 ]; then
-    ip netns exec $ns ip link set dev $intf mtu $4 || rc=$?
+    mtu="mtu $4"
+    #ip netns exec $ns ip link set dev $intf mtu $4 || rc=$?
   fi
   ip netns exec $ns ip addr add $ipa dev $intf || rc=$?
+  ip netns exec $ns ip link set dev $intf up $mtu || rc=$?
+
+  return $rc
+}
+
+#
+# ns_del_ifaddr: Detach an IPv4/IPv6 address from
+#                the specified interface and namespace
+#
+#  ns_del_ifaddr ns1 eth1 2001:0:0:1::1/64
+#
+ns_del_ifaddr () {
+  rc=0
+  if [ $# -lt 3 ]; then 
+    echo 'Usage: ns_del_ifaddr <namespace> <interface> <IP-address>' 1>&2
+    return 1
+  fi
+
+  ns=$1
+  intf=$2
+  ipa=$3
+  ip netns exec $ns ip addr del $ipa dev $intf || rc=$?
 
   return $rc
 }
