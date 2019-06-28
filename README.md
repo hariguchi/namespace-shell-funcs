@@ -7,6 +7,7 @@ A set of shell functions working with Linux Namespace
 * **ns_add_if**:       Add an interface to namespace
 * **ns_del_if**:       Delete an interface from namespace
 * **ns_add_ifaddr**:   Attach an IPv4/IPv6 address to the specified interface and namespace
+* **ns_del_ifaddr**:   Detach an IPv4/IPv6 address from the specified interface and namespace
 * **ns_flush_ifaddr**: Delete all IPv4/IPv6 addresses from the interface in the specified namespace
 * **ns_list**:         Show all the existing namespaces
 * **ns_exec**:         Execute a command in the specified namespace
@@ -190,6 +191,11 @@ PING 2001:0:0:1::2(2001:0:0:1::2) 56 data bytes
 3 packets transmitted, 3 received, 0% packet loss, time 2052ms
 rtt min/avg/max/mdev = 0.040/0.056/0.075/0.016 ms
 #
+```
+
+# **ns_del_ifaddr** -- Detach an IPv4/IPv6 address from the specified interface and namespace
+```
+ns_del_ifaddr namespace interface prefix
 ```
 
 # **ns_flush_ifaddr** -- Delete all IPv4/IPv6 addresses from the interface in the specified namespace
