@@ -9,14 +9,16 @@ A set of shell functions working with Linux Namespace
 * **ns_add_ifaddr**:   Attach an IPv4/IPv6 address to the specified interface and namespace
 * **ns_del_ifaddr**:   Detach an IPv4/IPv6 address from the specified interface and namespace
 * **ns_flush_ifaddr**: Delete all IPv4/IPv6 addresses from the interface in the specified namespace
-* **ns_list**:         Show all the existing namespaces
 * **ns_exec**:         Execute a command in the specified namespace
+* **ns_list**:         Show all the existing namespaces
 * **ns_runsh**:        Run a shell in the given namespace
 * **ns_where**:        Show the namespace in which the shell is running
 * **vif_add**:         Create a pair of veth interfaces
 * **vif_add_pair**:    Create a pair of veth interfaces from interface names
 * **vif_del**:         Delete a (pair of) veth interface(s)
-* **vif_peer_index**:  Return peer vif's ifindex
+* **vif_peer_index**:  Output peer vif's ifindex
+* **if_exists**        Return 0 if interface exists; return 1 otherwise
+* **if_get_master**    Output the master interface name if it exists
 * **add_ifaddr**:      Attach an IPv4/IPv6 address to the specified interface
 * **flush_ifaddr**:    Delete all IPv4/IPv6 addresses from the specified interface
 * **br_add**:          Add a kernel bridge
@@ -77,75 +79,6 @@ adding ns1
 # ns_del_if ns1 eth1
 ```
 
-### **vif_add** -- Create a pair of veth interfaces
-```
-vif_add veth_name veth_name
-```
-Example:
-```
-# . ./namespace-shell-funcs
-# vif_add veth1 veth2
-#
-```
-
-### **vif_add_pair** -- Create a pair of veth interfaces from interface names
-```
-vif_add_pair if1 if2
-```
-Example:
-```
-# . ./namespace-shell-funcs
-# vif_add_pair if1 if2
-# ip link | grep if1
-7: if2-if1@if1-if2: ...
-8: if1-if2@if2-if1: ...
-#
-```
-
-### **vif_del** -- Delete a (pair of) veth interface(s)
-```
-vif_del veth_name
-```
-The peer veth interface is also deleted if the specified veth
-interface has the peer.
-
-Example:
-```
-# . ./namespace-shell-funcs
-# vif_del veth1
-#
-```
-
-### **vif_peer_index** -- Return peer vif's ifindex
-```
-vif_peer_index interface
-```
-Example:
-```
-# . ./namespace-shell-funcs
-# vif_add veth1 veth2
-# vif_peer_index veth1
-6
-# vif_peer_index veth2
-7
-#
-```
-
-# **ns_add_if** -- Add an interface to namespace
-```
-ns_add_if namespace interface
-```
-Example:
-```
-# . ./namespace-shell-funcs
-# ns_add ns1 ns2      # Add two namespafes: ns1, ns2
-adding ns1
-adding ns2
-# vif_add veth1 veth2 # Create two veths: veth1, veth2
-# ns_add_if ns1 veth1 # Add veth1 to ns1
-# ns_add_if ns2 veth2 # Add veth2 to ns2
-```
-
 # **ns_add_ifaddr** -- Attach an IPv4/IPv6 address to the specified interface and namespace
 ```
 ns_add_ifaddr namespace interface prefix [mtu]
@@ -200,7 +133,7 @@ ns_del_ifaddr namespace interface prefix
 
 # **ns_flush_ifaddr** -- Delete all IPv4/IPv6 addresses from the interface in the specified namespace
 ```
-ns_flush_ifaddr namespace interface
+ns_flush_ifaddr namespace interface [up]
 ```
 Example:
 ```
@@ -289,6 +222,101 @@ ns1
 ns2
 # exit
 # ns_where
+#
+```
+
+### **vif_add** -- Create a pair of veth interfaces
+```
+vif_add veth_name veth_name
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# vif_add veth1 veth2
+#
+```
+
+### **vif_add_pair** -- Create a pair of veth interfaces from interface names
+```
+vif_add_pair if1 if2
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# vif_add_pair if1 if2
+# ip link | grep if1
+7: if2-if1@if1-if2: ...
+8: if1-if2@if2-if1: ...
+#
+```
+
+### **vif_del** -- Delete a (pair of) veth interface(s)
+```
+vif_del veth_name
+```
+The peer veth interface is also deleted if the specified veth
+interface has the peer.
+
+Example:
+```
+# . ./namespace-shell-funcs
+# vif_del veth1
+#
+```
+
+### **vif_peer_index** -- Output peer vif's ifindex
+```
+vif_peer_index interface
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# vif_add veth1 veth2
+# vif_peer_index veth1
+6
+# vif_peer_index veth2
+7
+#
+```
+
+### **if_exists** -- Return 0 if interface exists; return 1 otherwise
+```
+if_exists eth0
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# if_exists eth0
+# echo $?
+0
+# if_exists foo
+Device "foo" does not exist.
+# echo $?
+1
+#
+```
+
+### **if_get_master** -- Output the master interface name if it exists
+```
+if_get_master eth1
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# br_add br1
+# vif_add_pair ns1 br1
+# br_add_if br1 br1-ns1
+# if_get_master br1-ns1
+br1
+echo $?
+0
+# if_get_master ns1-br1
+# echo $?
+1
+# if_get_master foo
+Device "foo" does not exist.
+# echo $?
+1
 #
 ```
 

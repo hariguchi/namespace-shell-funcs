@@ -261,17 +261,22 @@ ns_del_ifaddr () {
 # ns_flush_ifaddr: Delete all IPv4/IPv6 addresses from
 #                the interface in the specified namespace
 #
-#  ns_flush_ifaddr ns1 eth1
+#  ns_flush_ifaddr ns1 eth1 [up]
 #
 ns_flush_ifaddr () {
   rc=0
   if [ $# -ge 2 ]; then
+    if [ $# -ge 2 -a "$2" = "up" ]; then
+      ifup="up"
+    else
+      ifup=""
+    fi
     ns=$1
     intf=$2
-    ip netns exec $ns ip -4 addr flush dev $intf || rc=$?
-    ip netns exec $ns ip -6 addr flush dev $intf || rc=$?
+    ip netns exec $ns ip -4 addr flush dev $intf $ifup || rc=$?
+    ip netns exec $ns ip -6 addr flush dev $intf $ifup || rc=$?
   else
-    echo 'Usage: ns_flush_ifaddr <namespace> <interface>' 1>&2
+    echo 'Usage: ns_flush_ifaddr <namespace> <interface> [up]' 1>&2
     rc=1
   fi
 
@@ -366,17 +371,57 @@ add_ifaddr () {
 #
 # flush_ifaddr: Delete all IPv4/IPv6 addresses from the specified interface
 #
-#  flush_ifaddr eth1
+#  flush_ifaddr eth1 [up]
 #
 flush_ifaddr () {
   rc=0
   if [ $# -ge 1 ]; then
+    if [ $# -ge 2 -a "$2" = "up" ]; then
+      ifup="up"
+    else
+      ifup=""
+    fi
     intf=$1
-    ip -4 addr flush dev $intf || rc=$?
-    ip -6 addr flush dev $intf || rc=$?
+    ip -4 addr flush dev $intf $ifup || rc=$?
+    ip -6 addr flush dev $intf $ifup || rc=$?
   else
-    echo 'Usage: flush_ifaddr <interface>' 1>&2
+    echo 'Usage: flush_ifaddr <interface> [up]' 1>&2
     rc=1
+  fi
+
+  return $rc
+}
+
+#
+# if_get_master: Output the name of the master interface if exists
+#
+#  if_get_master eth0
+#
+if_get_master () {
+  rc=0
+  if [ $# -ge 1 ]; then
+    if ip link show $1 | grep master > /dev/null ; then
+      ip link show $1 | head -1 | \
+        sed 's/^.* master \(.*\) state .*$/\1/' || rc=$?
+    else
+      rc=1
+    fi
+  fi
+
+  return $rc
+}
+
+#
+# if_exists: Return 0 if the interface exists. Returns 1 otherwise
+#
+#  if_exists eth0
+#
+if_exists () {
+  rc=1
+  if [ $# -ge 1 ]; then
+    if ip link show $1 > /dev/null ; then
+      rc=0
+    fi
   fi
 
   return $rc
