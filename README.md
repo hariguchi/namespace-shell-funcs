@@ -21,6 +21,7 @@ A set of shell functions working with Linux Namespace
 * **if_get_master**    Output the master interface name if it exists
 * **add_ifaddr**:      Attach an IPv4/IPv6 address to the specified interface
 * **flush_ifaddr**:    Delete all IPv4/IPv6 addresses from the specified interface
+* **if_rename**:       Change the interface names
 * **br_add**:          Add a kernel bridge
 * **br_del**:          Delete a kernel bridge
 * **br_add_if**:       Add an interface to a bridge
@@ -186,6 +187,17 @@ veth1     Link encap:Ethernet  HWaddr 5e:56:e9:e8:82:56
           TX packets:26 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000 
           RX bytes:3195 (3.1 KB)  TX bytes:2882 (2.8 KB)
+```
+
+# **if_rename** -- Execute a command in the specified namespace
+```
+if_rename old_interface_name new_interface_name
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# vif_add veth1 veth2 # Create two veths: veth1, veth2
+# vif_rename veth2 veth0
 ```
 
 ### **ns_list** -- Show all the existing namespaces

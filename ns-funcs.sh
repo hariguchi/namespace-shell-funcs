@@ -393,6 +393,26 @@ flush_ifaddr () {
 }
 
 #
+# if_rename: Change interface names
+#
+#  if_rename eth0 eth0-new
+#
+if_rename () {
+  rc=0
+  if [ $# -ge 2 ]; then
+    ip link set $1 down || rc=$?
+    if [ $? -eq 0 ]; then
+      ip link set $1 name $2 up || rc=$?
+    fi
+  else
+    echo 'Usage: if_rename <old_ifname> <new_ifname>' 1>&2
+    rc=1
+  fi
+
+  return $?
+}
+
+#
 # if_get_master: Output the name of the master interface if exists
 #
 #  if_get_master eth0
@@ -406,6 +426,9 @@ if_get_master () {
     else
       rc=1
     fi
+  else
+    echo 'Usage: if_get_master <interface>' 1>&2
+    rc=1
   fi
 
   return $rc
@@ -422,6 +445,9 @@ if_exists () {
     if ip link show $1 > /dev/null ; then
       rc=0
     fi
+  else
+    echo 'Usage: if_exists <interface>' 1>&2
+    rc=1
   fi
 
   return $rc
