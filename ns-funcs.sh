@@ -442,7 +442,7 @@ if_get_master () {
 if_exists () {
   rc=1
   if [ $# -ge 1 ]; then
-    if ip link show $1 > /dev/null ; then
+    if ip link show $1 > /dev/null 2>&1 ; then
       rc=0
     fi
   else
