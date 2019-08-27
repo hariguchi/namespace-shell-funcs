@@ -19,11 +19,13 @@ A set of shell functions working with Linux Namespace
 * **vif_peer_index**:  Output peer vif's ifindex
 * **if_exists**        Return 0 if interface exists; return 1 otherwise
 * **if_get_master**    Output the master interface name if it exists
+* **if_set_master**    Add the specified interface(s) to a master interface
+* **if_unset_master**  Detach the specified interface(s) from the master interface(s)
 * **add_ifaddr**:      Attach an IPv4/IPv6 address to the specified interface
 * **flush_ifaddr**:    Delete all IPv4/IPv6 addresses from the specified interface
 * **if_rename**:       Change the interface names
-* **br_add**:          Add a kernel bridge
-* **br_del**:          Delete a kernel bridge
+* **br_add**:          Add kernel bridge(s)
+* **br_del**:          Delete kernel bridge(s)
 * **br_add_if**:       Add an interface to a bridge
 * **br_del_if**:       Delete an interface from a bridge
 * **pci2if**:          Convert pci address to interface name
@@ -325,21 +327,66 @@ echo $?
 # if_get_master ns1-br1
 # echo $?
 1
-# if_get_master foo
-Device "foo" does not exist.
+# if_get_master lo
 # echo $?
 1
 #
 ```
 
-# **br_add** -- Create a kernel bridge
+### **if_set_master** -- Add the specified interface(s) to a master interface
 ```
-br_add br1
+if_set_master br1 eth1 
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# br_add br1
+# vif_add_pair ns1 br1
+# if_set_master br1 br1-ns1
+# if_get_master br1-ns1
+br1
+echo $?
+0
+# if_get_master ns1-br1
+# echo $?
+1
+# if_get_master lo
+# echo $?
+1
+#
 ```
 
-# **br_del** -- Delete a kernel bridge
+### **if_unset_master** -- Detach the specified interface(s) from master interface(s)
 ```
-br_del br1
+if_unset_master eth1 eth2
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# br_add br1
+# vif_add_pair ns1 br1
+# if_set_master br1 br1-ns1
+# if_get_master br1-ns1
+br1
+echo $?
+0
+# if_unset_master ns1-br1 br1
+# echo $?
+0
+# if_get_master br1-ns1
+# echo $?
+0
+#
+```
+
+# **br_add** -- Create kernel bridge(s)
+```
+br_add br1 br2
+```
+
+# **br_del** -- Delete kernel bridge(s)
+```
+br_del br1 br2
 ```
 
 # **br_add_if** -- Add an interface to a bridge

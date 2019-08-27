@@ -435,6 +435,40 @@ if_get_master () {
 }
 
 #
+# if_set_master: add the specified interface to a master interface
+#
+#  if_set_master br0 eth1 [eth2 ...]
+#
+if_set_master () {
+  if [ $# -lt 2 ]; then
+    echo "Usage: if_set_master <master> <interface> [interface ...]" 1>&2
+    return 1
+  fi
+  master="$1"
+  shift
+  for intf in $*
+  do
+    ip link set "$intf" master "$master"
+  done
+}
+
+#
+# if_unset_master: Detach the specified interface from its master
+#
+#  if_unset_master [eth1 ...]
+#
+if_unset_master () {
+  if [ $# -lt 1 ]; then
+    echo "Usage: if_unset_master [interface ...]" 1>&2
+    return 1
+  fi
+  for intf in $*
+  do
+    ip link set "$intf" nomaster
+  done
+}
+
+#
 # if_exists: Return 0 if the interface exists. Returns 1 otherwise
 #
 #  if_exists eth0
@@ -456,24 +490,28 @@ if_exists () {
 #
 # br_add: Create a kernel bridge
 #
-#  br_add br1
+#  br_add br1 [br2 ...]
 #
 br_add () {
   rc=0
   if [ $# -ge 1 ]; then
-    if ! brctl show | grep "$1" > /dev/null ; then
-      brctl addbr "$1" || rc=1
-      if [ $rc -eq 0 ]; then
-        ifconfig $1 up
+    for br in $*
+    do
+      if ! ip link show "$br" > /dev/null 2>&1 ; then
+        if brctl addbr "$br" ; then
+          ifconfig $br up
+        else
+          rc=1
+          echo "br_add: Error: failed to add bridge $br" 1>&2
+        fi
       else
-        echo "br_add(): Error: failed to add bridge $1" 1>&2
+        rc=1
+        echo "br_add: bridge $br already exists" 1>&2
       fi
-    else
-      echo "br_add(): bridge $1 already exists" 1>&2
-    fi
+    done
   else
-    echo "Usage: br_add <bridge-name>" 1>&2
     rc=1
+    echo "Usage: br_add <bridge> [bridge ...]" 1>&2
   fi
 
   #
@@ -494,15 +532,22 @@ br_add () {
 br_del () {
   rc=0
   if [ $# -ge 1 ]; then
-    if brctl show | grep "$1" > /dev/null ; then
-      ifconfig "$1" down
-      brctl delbr "$1" || rc=1
-      if [ $rc -ne 0 ]; then
-        echo "br_del(): Error: failed to delete bridge $1" 1>&2
+    for br in $*
+    do
+      if ip link show "$br" > /dev/null 2>&1 ; then
+        ifconfig "$br" down
+        if ! brctl delbr "$br" ; then
+          rc=1
+          echo "br_del: failed to delete bridge $br" 1>&2
+        fi
+      else
+        rc=1
+        echo "br_del: brige $br does not exist" 1>&2
       fi
-    else
-      echo "br_del(): brige $1 does not exist" 1>&2
-    fi
+    done
+  else
+    rc=1
+    echo "Usage: br_del <bridge> [bridge ...]" 1>&2
   fi
 
   return $rc
