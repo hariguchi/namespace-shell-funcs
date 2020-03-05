@@ -82,7 +82,7 @@ adding ns1
 # ns_del_if ns1 eth1
 ```
 
-# **ns_add_ifaddr** -- Attach an IPv4/IPv6 address to the specified interface and namespace
+### **ns_add_ifaddr** -- Attach an IPv4/IPv6 address to the specified interface and namespace
 ```
 ns_add_ifaddr namespace interface prefix [mtu]
 ```
@@ -129,12 +129,12 @@ rtt min/avg/max/mdev = 0.040/0.056/0.075/0.016 ms
 #
 ```
 
-# **ns_del_ifaddr** -- Detach an IPv4/IPv6 address from the specified interface and namespace
+### **ns_del_ifaddr** -- Detach an IPv4/IPv6 address from the specified interface and namespace
 ```
 ns_del_ifaddr namespace interface prefix
 ```
 
-# **ns_flush_ifaddr** -- Delete all IPv4/IPv6 addresses from the interface in the specified namespace
+### **ns_flush_ifaddr** -- Delete all IPv4/IPv6 addresses from the interface in the specified namespace
 ```
 ns_flush_ifaddr namespace interface [up]
 ```
@@ -169,7 +169,7 @@ veth1     Link encap:Ethernet  HWaddr 52:6b:d7:8e:78:7e
           RX bytes:4824 (4.8 KB)  TX bytes:5212 (5.2 KB)
 ```
 
-# **ns_exec** -- Execute a command in the specified namespace
+### **ns_exec** -- Execute a command in the specified namespace
 ```
 ns_exec namespace cmd [...]
 ```
@@ -191,7 +191,7 @@ veth1     Link encap:Ethernet  HWaddr 5e:56:e9:e8:82:56
           RX bytes:3195 (3.1 KB)  TX bytes:2882 (2.8 KB)
 ```
 
-# **if_rename** -- Execute a command in the specified namespace
+### **if_rename** -- Rename the specified network interface
 ```
 if_rename old_interface_name new_interface_name
 ```
