@@ -379,17 +379,17 @@ echo $?
 #
 ```
 
-# **br_add** -- Create kernel bridge(s)
+### **br_add** -- Create kernel bridge(s)
 ```
 br_add br1 br2
 ```
 
-# **br_del** -- Delete kernel bridge(s)
+### **br_del** -- Delete kernel bridge(s)
 ```
 br_del br1 br2
 ```
 
-# **br_add_if** -- Add an interface to a bridge
+### **br_add_if** -- Add an interface to a bridge
 ```
 br_add_if bridge interface
 ```
@@ -429,12 +429,12 @@ PING 172.16.1.2 (172.16.1.2) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.039/0.042/0.049/0.008 ms
 ```
 
-# **br_del_if** -- Delete an interface from a bridge
+### **br_del_if** -- Delete an interface from a bridge
 ```
 br_del_if bridge interface
 ```
 
-# **pci2if** -- Convert pci address to interface name
+### **pci2if** -- Convert pci address to interface name
 ```
 pci2if pci_address
 ```
@@ -446,7 +446,7 @@ enp0s8
 #
 ```
 
-# **addrFromPrefix** -- Output IP address from IP prefix
+### **addrFromPrefix** -- Output IP address from IP prefix
 ```
 addFromPrefix ip_prefix
 ```
@@ -461,7 +461,7 @@ Example:
 #
 ```
 
-# **lenFromPrefix** -- Output prefix length from IP prefix
+### **lenFromPrefix** -- Output prefix length from IP prefix
 ```
 lenFromPrefix ip_prefix
 ```
