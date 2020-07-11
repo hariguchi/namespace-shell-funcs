@@ -188,7 +188,7 @@ vrf_show () {
 
 
 #
-# vrf_show: list VRFs or show a VRF
+# vrf_show_addr: list interfaces belonging to a VRF
 #
 #  vrf_show_addr [-b] [-d] [-h] vrf
 #
