@@ -111,6 +111,177 @@ ns_del_if () {
   return $rc
 }
 
+
+#
+# vrf_add: Add a VRF
+#
+#  vrf_add vrfBlue 10
+#
+vrf_add () {
+  if [ $# -lt 2 ]; then
+    echo 'Usage: vrf_add <vrf> <table-id>' 1>&2
+    return 1
+  fi
+  rc=0
+  vrf="$1"
+  tid="$2"
+  if ! ip link show $vrf > /dev/null 2>&1 ; then
+    ip link add $vrf type vrf table $tid || rc=$?
+    ip link set dev $vrf up || rc=$?
+  fi
+  return $rc
+}
+
+
+#
+# vrf_del: Delete a VRF
+#
+#  vrf_del vrfBlue
+#
+vrf_del () {
+  if [ $# -lt 1 ]; then
+    echo 'Usage: vrf_del <vrf>' 1>&2
+    return 1
+  fi
+  rc=0
+  vrf="$1"
+  if ip link show $vrf > /dev/null 2>&1 ; then
+    ip link del $vrf || rc=$?
+  else
+    echo "vrf_del: no such VRF: $vrf" 1>&2
+    rc=1
+  fi
+  return $rc
+}
+
+
+#
+# vrf_show: list VRFs or show a VRF
+#
+#  vrf_show [-b] [-d] [-h] [vrf]
+#
+vrf_show () {
+  _opt=""
+  while [ $# -gt 0 ]
+  do
+    case $1 in
+    -h*) echo "Usage: vrf_show [-b] [-d] [vrf]" 1>&2
+         return 1
+         ;;
+    -b*) _opt="-br"
+         ;;
+    -d*) _opt="-d"
+         ;;
+    *)   break
+         ;;
+    esac
+    shift
+  done
+  rc=0
+  if [ $# -lt 1 ]; then
+    ip $_opt link show type vrf || rc=$?
+  else
+    ip $_opt link show master $1 || rc=$?
+  fi
+  return $rc
+}
+
+
+#
+# vrf_show: list VRFs or show a VRF
+#
+#  vrf_show_addr [-b] [-d] [-h] vrf
+#
+vrf_show_addr () {
+  _opt=""
+  while [ $# -gt 0 ]
+  do
+    case $1 in
+    -h*) echo "Usage: vrf_show_addr [-b] [-d] [vrf]" 1>&2
+         return 1
+         ;;
+    -b*) _opt="-br"
+         ;;
+    -d*) _opt="-d"
+         ;;
+    *)   break
+         ;;
+    esac
+    shift
+  done
+  if [ $# -ge 1 ]; then
+    ip $_opt link show master $1 || rc=$?
+  else
+    echo "Usage: vrf_show_addr [-b] [-d] [-h] <vrf>" 1>&2
+    rc=1
+  fi
+  return $rc
+}
+
+
+#
+# vrf_show_tid: list VRFs and their table id
+#
+#  vrf_show_tid
+#
+vrf_show_tid () {
+  _vrfs=`ip -br  link show type vrf | cut -d' ' -f1`
+  for _vrf in $_vrfs
+  do
+    _tid=`ip -d link show $_vrf | grep table | cut -d' ' -f7`
+    echo "$_vrf $_tid"
+  done
+}
+
+
+#
+# vrf_add_if: Add an interface to a VRF
+#
+#  vrf_add_if vrfBlue eth0
+#
+vrf_add_if () {
+  if [ $# -lt 2 ]; then
+    echo 'Usage: vrf_add_if <vrf> <interface>' 1>&2
+    return 1
+  fi
+  rc=0
+  vrf="$1"
+  intf="$2"
+  if [ `ip link show type vrf $vrf | wc -l` -eq 0 ]; then
+    echo "vrf_add_if: ERROR: no such vrf: $vrf" 1>&2
+    return 1
+  fi
+  if ip link show $intf > /dev/null 2>&1 ; then
+    ip link set dev $intf master $vrf up || rc=$?
+  else
+    echo "vrf_add_if: ERROR: no such interface: $intf" 1>&2
+    rc=1
+  fi
+  return $rc
+}
+
+
+#
+# vrf_del_if: Make an interface belong to the default VRF.
+#
+#  vrf_del_if eth0
+#
+vrf_del_if () {
+  if [ $# -lt 1 ]; then
+    echo 'Usage: vrf_del_if <interface>' 1>&2
+    return 1
+  fi
+  rc=0
+  if ip link show $1 > /dev/null 2>&1 ; then
+    ip link set dev $1 nomaster || rc=$?
+  else
+    echo "vrf_del_if: ERROR: no such interface: $1" 1>&2
+    rc=1
+  fi
+  return $rc
+}
+
+
 #
 # vif_add: Add a pair of veth interfaces
 #
