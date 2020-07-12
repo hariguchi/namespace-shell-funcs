@@ -210,7 +210,7 @@ vrf_show_addr () {
     shift
   done
   if [ $# -ge 1 ]; then
-    ip $_opt link show master $1 || rc=$?
+    ip $_opt addr show master $1 || rc=$?
   else
     echo "Usage: vrf_show_addr [-b] [-d] [-h] <vrf>" 1>&2
     rc=1
