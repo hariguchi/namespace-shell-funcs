@@ -4,8 +4,8 @@ A set of shell functions working with Linux Namespace
 
 * **ns_add**:          Add namespaces
 * **ns_del**:          Delete namespaces
-* **ns_add_if**:       Add an interface to namespace
-* **ns_del_if**:       Delete an interface from namespace
+* **ns_add_if**:       Add an interface to a namespace
+* **ns_del_if**:       Delete an interface from a namespace
 * **ns_add_ifaddr**:   Attach an IPv4/IPv6 address to the specified interface and namespace
 * **ns_del_ifaddr**:   Detach an IPv4/IPv6 address from the specified interface and namespace
 * **ns_flush_ifaddr**: Delete all IPv4/IPv6 addresses from the interface in the specified namespace
@@ -13,6 +13,14 @@ A set of shell functions working with Linux Namespace
 * **ns_list**:         Show all the existing namespaces
 * **ns_runsh**:        Run a shell in the given namespace
 * **ns_where**:        Show the namespace in which the shell is running
+* **vrf_add**:         create a VRF
+* **vrf_del**:         Delete a VRF
+* **vrf_add_if**:      Add an interface to a VRF
+* **vrf_del_if**:      Make the specified interface belong to the default VRF
+* **vrf_show**:        List VRFs or show a VRF
+* **vrf_show_addr**:   List the interfaces belonging to a VRF
+* **vrf_show_tid**:    List VRFs and the associated table IDs
+
 * **vif_add**:         Create a pair of veth interfaces
 * **vif_add_pair**:    Create a pair of veth interfaces from interface names
 * **vif_del**:         Delete a (pair of) veth interface(s)
@@ -199,7 +207,7 @@ Example:
 ```
 # . ./namespace-shell-funcs
 # vif_add veth1 veth2 # Create two veths: veth1, veth2
-# vif_rename veth2 veth0
+# if_rename veth2 veth0
 ```
 
 ### **ns_list** -- Show all the existing namespaces
@@ -236,6 +244,116 @@ ns1
 ns2
 # exit
 # ns_where
+#
+```
+
+### **vrf_add** -- Create a VRF
+```
+vrf_add vrf table_id
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# vrf_add vrf_blue 10
+#
+```
+
+### **vrf_del** -- Delete a VRF
+```
+vrf_del vrf
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# vrf_del vrf_blue
+#
+```
+
+### **vrf_add_if** -- Add an interface to a VRF
+```
+vrf_add_if vrf interface
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# vrf_add vrf_blue 10
+# vrf_add_if vrf_blue eth1
+```
+
+### **vrf_del_if** -- Make the specified interface belong to the default VRF
+```
+vrf_del_if interface
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# vrf_add vrf_blue 10
+# vrf_add_if vrf_blue eth1
+# ip link show eth1
+8: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master vrf_blue state UP mode DEFAULT group default qlen 1000
+    link/ether aa:b1:39:c8:e5:ea brd ff:ff:ff:ff:ff:ff
+# vrf_del_if eth1
+# ip link show eth1
+8: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+    link/ether aa:b1:39:c8:e5:ea brd ff:ff:ff:ff:ff:ff
+#
+```
+
+### **vrf_show** -- List VRFs or show a VRF
+```
+vrf_show [-b] [-d] [-h] [vrf]
+```
+List VRFs.
+* -b: in brief fromat
+* -d: in detailed format
+* -h: shows usage.
+
+Example:
+```
+# . ./namespace-shell-funcs
+# vrf_add vrf_blue 10
+# vrf_add vrf_red 20
+# vrf_add_if vrf_blue eth1
+# vrf_show -b
+vrf_blue         UP             12:8e:42:da:e5:49 <NOARP,MASTER,UP,LOWER_UP>
+vrf_red          UP             a6:55:65:c1:e2:a3 <NOARP,MASTER,UP,LOWER_UP>
+# vrf_show -b vrf_blue
+eth1 UP             4e:7f:60:40:ef:29 <BROADCAST,MULTICAST,UP,LOWER_UP>
+#
+```
+
+### **vrf_show_addr** -- List interfaces belonging to a VRF
+```
+vrf_show_addr [-b] [-d] [-h] vrf
+```
+List the interfaces that belong to a VRF.
+* -b: in brief fromat
+* -d: in detailed format
+* -h: shows usage.
+
+Example:
+```
+# . ./namespace-shell-funcs
+# vrf_add vrf_blue 10
+# vrf_add_if vrf_blue eth1
+# ip addr add 1.2.3.4/24 dev eth1
+# vrf_show_addr -b brf_blue
+eth1 UP             1.2.3.4/24 fe80::4c7f:60ff:fe40:ef29/64
+#
+```
+
+### **vrf_show_tid** -- List VRFs and the associated table IDs
+```
+vrf_show_tid
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# vrf_add vrf_blue 10
+# vrf_add_vrf_red 20
+# vrf_show_tid
+vrf_blue 10
+vrf_red 20
 #
 ```
 
