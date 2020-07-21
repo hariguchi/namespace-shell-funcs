@@ -123,11 +123,13 @@ vrf_add () {
     return 1
   fi
   rc=0
-  vrf="$1"
-  tid="$2"
-  if ! ip link show $vrf > /dev/null 2>&1 ; then
-    ip link add $vrf type vrf table $tid || rc=$?
-    ip link set dev $vrf up || rc=$?
+  _vrf="$1"
+  _tid="$2"
+  if ! ip link show $_vrf > /dev/null 2>&1 ; then
+    ip link add $_vrf type vrf table $_tid || rc=$?
+    ip link set dev $_vrf up || rc=$?
+  else
+    echo "vrf $_vrf already exists" 1>&2
   fi
   return $rc
 }
@@ -144,11 +146,11 @@ vrf_del () {
     return 1
   fi
   rc=0
-  vrf="$1"
-  if ip link show $vrf > /dev/null 2>&1 ; then
-    ip link del $vrf || rc=$?
+  _vrf="$1"
+  if ip link show $_vrf > /dev/null 2>&1 ; then
+    ip link del $_vrf || rc=$?
   else
-    echo "vrf_del: no such VRF: $vrf" 1>&2
+    echo "vrf_del: no such VRF: $_vrf" 1>&2
     rc=1
   fi
   return $rc
@@ -279,6 +281,31 @@ vrf_del_if () {
     rc=1
   fi
   return $rc
+}
+
+
+#
+# vrf_get_tid: Retun table id associated with the VRF
+#              Return 1 if an error happens
+#
+#  vrf_get_tid vrf1
+#
+vrf_get_tid () {
+  if [ $# -lt 1 ]; then
+    echo 'Usage: vrf_get_tid <vrf>' 1>&2
+    return 1
+  fi
+  rc=0
+  if ! ip -d link sh $1 > /dev/null ; then
+    return 1
+  fi
+  tid=`ip -d link sh $1 | grep 'vrf table' | \
+    sed 's/vrf table \([0-9]*\) .*$/\1/'` || rc=$?
+  if [ $rc -eq 0 ]; then
+    echo $tid
+  else
+    return 1
+  fi
 }
 
 
