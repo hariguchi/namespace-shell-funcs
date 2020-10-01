@@ -17,6 +17,7 @@ A set of shell functions working with Linux Namespace
 * **vrf_del**:         Delete a VRF
 * **vrf_add_if**:      Add an interface to a VRF
 * **vrf_del_if**:      Make the specified interface belong to the default VRF
+* **vrf_get_tid**:     Print the table id associated with a VRF
 * **vrf_show**:        List VRFs or show a VRF
 * **vrf_show_addr**:   List the interfaces belonging to a VRF
 * **vrf_show_tid**:    List VRFs and the associated table IDs
@@ -296,6 +297,22 @@ Example:
 # ip link show eth1
 8: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
     link/ether aa:b1:39:c8:e5:ea brd ff:ff:ff:ff:ff:ff
+#
+```
+
+### **vrf_get_tid** -- Print the table ID associated with a VRF
+```
+vrf_get_tid vrf
+```
+Print the table ID associated with the specified VRF.
+Return 0 if success. Return 1 otherwise.
+
+Example:
+```
+# . ./namespace-shell-funcs
+# vrf_add vrf_blue 10
+# vrf_get_tid vrf_blue
+10
 #
 ```
 
