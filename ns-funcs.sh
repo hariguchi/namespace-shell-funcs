@@ -285,7 +285,7 @@ vrf_del_if () {
 
 
 #
-# vrf_get_tid: Retun table id associated with the VRF
+# vrf_get_tid: Print the table id associated with the VRF
 #              Return 1 if an error happens
 #
 #  vrf_get_tid vrf1
@@ -540,14 +540,14 @@ ns_where () {
 }
 
 #
-# add_ifaddr: Attach an IPv4/IPv6 address to the specified interface
+# if_add_addr: Attach an IPv4/IPv6 address to the specified interface
 #
-#  add_ifaddr eth1 2001:0:0:1::1/64 8192
+#  if_add_addr eth1 2001:0:0:1::1/64 8192
 #
-add_ifaddr () {
+if_add_addr () {
   rc=0
   if [ $# -lt 2 ]; then 
-    echo 'Usage: add_ifaddr <interface> <IP-address> [mtu]' 1>&2
+    echo 'Usage: if_add_addr <interface> <IP-address> [mtu]' 1>&2
     return 1
   fi
 
@@ -562,6 +562,30 @@ add_ifaddr () {
     ip link set dev $intf mtu $3 || rc=$?
   fi
   ip addr add $ipa dev $intf || rc=$?
+
+  return $rc
+}
+
+#
+# if_del_addr: Detach an IPv4/IPv6 address from the specified interface
+#
+#  if_del_addr eth1 2001:0:0:1::1/64
+#
+if_del_addr () {
+  rc=0
+  if [ $# -lt 2 ]; then 
+    echo 'Usage: if_del_addr <interface> <IP-address>' 1>&2
+    return 1
+  fi
+
+  intf=$1
+  ipa=$2
+  if echo $ipa | grep ':' > /dev/null ; then
+    ver="-6"
+  else
+    ver="-4"
+  fi
+  ip addr del $ipa dev $intf || rc=$?
 
   return $rc
 }
