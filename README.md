@@ -30,8 +30,9 @@ A set of shell functions working with Linux Namespace
 * **if_get_master**    Output the master interface name if it exists
 * **if_set_master**    Add the specified interface(s) to a master interface
 * **if_unset_master**  Detach the specified interface(s) from the master interface(s)
-* **add_ifaddr**:      Attach an IPv4/IPv6 address to the specified interface
-* **flush_ifaddr**:    Delete all IPv4/IPv6 addresses from the specified interface
+* **if_add_addr**:     Attach an IPv4/IPv6 address to the specified interface
+* **if_del_addr**:     Detach an IPv4/IPv6 address from the specified interface
+* **if_flush_addr**:   Delete all IPv4/IPv6 addresses from the specified interface
 * **if_rename**:       Change the interface names
 * **br_add**:          Add kernel bridge(s)
 * **br_del**:          Delete kernel bridge(s)
@@ -198,6 +199,78 @@ veth1     Link encap:Ethernet  HWaddr 5e:56:e9:e8:82:56
           TX packets:26 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000 
           RX bytes:3195 (3.1 KB)  TX bytes:2882 (2.8 KB)
+```
+
+### **if_add_addr** -- Attach an IPv4/IPv6 address to the specified interface
+```
+if_add_addr interface IP-address [mtu]
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# if_add_addr eth1 192.168.1.1/24
+# if_add_addr eth1 2001:1000::1/64
+# ip addr show eth1
+6: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 12:29:76:d6:d4:b2 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.1/24 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 2001:1000::1/64 scope global
+       valid_lft forever preferred_lft forever
+    inet6 fe80::1029:76ff:fed6:d4b2/64 scope link
+       valid_lft forever preferred_lft forever
+```
+
+### **if_del_addr** -- Detach an IPv4/IPv6 address to the specified interface
+```
+if_del_addr interface IP-address
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# if_add_addr eth1 192.168.1.1/24
+# if_add_addr eth1 2001:1000::1/64
+# ip addr show eth1
+6: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 12:29:76:d6:d4:b2 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.1/24 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 2001:1000::1/64 scope global
+       valid_lft forever preferred_lft forever
+    inet6 fe80::1029:76ff:fed6:d4b2/64 scope link
+       valid_lft forever preferred_lft forever`
+# if_del_addr eth1 2001:1000::1/64
+# ip addr show eth1
+6: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 12:29:76:d6:d4:b2 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.1/24 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::1029:76ff:fed6:d4b2/64 scope link
+       valid_lft forever preferred_lft forever`
+``
+
+### **if_flush_addr** -- Delete all IPv4/IPv6 addresses from the specified interface
+```
+if_flush_addr interface [up]
+```
+Example:
+```
+# . ./namespace-shell-funcs
+# if_add_addr eth1 192.168.1.1/24
+# if_add_addr eth1 2001:1000::1/64
+# ip addr show eth1
+6: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 12:29:76:d6:d4:b2 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.1/24 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 2001:1000::1/64 scope global
+       valid_lft forever preferred_lft forever
+    inet6 fe80::1029:76ff:fed6:d4b2/64 scope link
+       valid_lft forever preferred_lft forever
+# if_flush_addr eth1
+# ip addr show eth1
+6: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 12:29:76:d6:d4:b2 brd ff:ff:ff:ff:ff:ff
 ```
 
 ### **if_rename** -- Rename the specified network interface
