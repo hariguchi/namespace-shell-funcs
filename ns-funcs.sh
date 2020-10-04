@@ -591,11 +591,11 @@ if_del_addr () {
 }
 
 #
-# flush_ifaddr: Delete all IPv4/IPv6 addresses from the specified interface
+# if_flush_addr: Delete all IPv4/IPv6 addresses from the specified interface
 #
-#  flush_ifaddr eth1 [up]
+#  if_flush_addr eth1 [up]
 #
-flush_ifaddr () {
+if_flush_addr () {
   rc=0
   if [ $# -ge 1 ]; then
     if [ $# -ge 2 -a "$2" = "up" ]; then
@@ -607,7 +607,7 @@ flush_ifaddr () {
     ip -4 addr flush dev $intf $ifup || rc=$?
     ip -6 addr flush dev $intf $ifup || rc=$?
   else
-    echo 'Usage: flush_ifaddr <interface> [up]' 1>&2
+    echo 'Usage: if_flush_addr <interface> [up]' 1>&2
     rc=1
   fi
 
