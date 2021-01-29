@@ -427,9 +427,10 @@ ns_add_ifaddr () {
   if [ $# -ge 4 ]; then
     mtu="mtu $4"
     #ip netns exec $ns ip link set dev $intf mtu $4 || rc=$?
+    ip netns exec $ns ip link set dev $intf up $mtu || rc=$?
+  else
+    ip netns exec $ns ip addr add $ipa dev $intf || rc=$?
   fi
-  ip netns exec $ns ip addr add $ipa dev $intf || rc=$?
-  ip netns exec $ns ip link set dev $intf up $mtu || rc=$?
 
   return $rc
 }
