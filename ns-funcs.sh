@@ -747,7 +747,7 @@ if_up () {
 }
 
 #
-# if_down: bring an interface down
+# if_down: take an interface down
 #
 #  if_down interface
 #
