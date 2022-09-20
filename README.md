@@ -22,11 +22,16 @@ A set of shell functions working with Linux Namespace
 * **vrf_show_addr**:   List the interfaces belonging to a VRF
 * **vrf_show_tid**:    List VRFs and the associated table IDs
 
+* **vlan_add**:        Create a VLAN interfaces
+* **vlan_del**:        Remove a VLAN interfaces
 * **vif_add**:         Create a pair of veth interfaces
 * **vif_add_pair**:    Create a pair of veth interfaces from interface names
 * **vif_del**:         Delete a (pair of) veth interface(s)
 * **vif_peer_index**:  Output peer vif's ifindex
 * **if_exists**        Return 0 if interface exists; return 1 otherwise
+* **if_up**            Bring up a network interface
+* **if_down**          Take down a network interface
+* **if_change**        Bring up or take down a network interface
 * **if_get_master**    Output the master interface name if it exists
 * **if_set_master**    Add the specified interface(s) to a master interface
 * **if_unset_master**  Detach the specified interface(s) from the master interface(s)
@@ -72,7 +77,7 @@ ns_add_if namespace interface
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # ns_add ns1
 adding ns1
 # ns_add_if ns1 eth1
@@ -85,7 +90,7 @@ ns_del_if namespace interface
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # ns_add ns1
 adding ns1
 # ns_add_if ns1 eth1
@@ -107,7 +112,7 @@ Assume you want to create the following network.
 ```
 Type the following commands.
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # ns_add ns1 ns2                             # Add two namespafes: ns1, ns2
 adding ns1
 adding ns2
@@ -150,7 +155,7 @@ ns_flush_ifaddr namespace interface [up]
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # ns_add ns1 ns2                             # Add two namespafes: ns1, ns2
 adding ns1
 adding ns2
@@ -185,7 +190,7 @@ ns_exec namespace cmd [...]
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # ns_add ns1 ns2      # Add two namespafes: ns1, ns2
 adding ns1
 adding ns2
@@ -207,7 +212,7 @@ if_add_addr interface IP-address [mtu]
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # if_add_addr eth1 192.168.1.1/24
 # if_add_addr eth1 2001:1000::1/64
 # ip addr show eth1
@@ -227,7 +232,7 @@ if_del_addr interface IP-address
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # if_add_addr eth1 192.168.1.1/24
 # if_add_addr eth1 2001:1000::1/64
 # ip addr show eth1
@@ -247,7 +252,7 @@ Example:
        valid_lft forever preferred_lft forever
     inet6 fe80::1029:76ff:fed6:d4b2/64 scope link
        valid_lft forever preferred_lft forever`
-``
+```
 
 ### **if_flush_addr** -- Delete all IPv4/IPv6 addresses from the specified interface
 ```
@@ -255,7 +260,7 @@ if_flush_addr interface [up]
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # if_add_addr eth1 192.168.1.1/24
 # if_add_addr eth1 2001:1000::1/64
 # ip addr show eth1
@@ -279,7 +284,7 @@ if_rename old_interface_name new_interface_name
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vif_add veth1 veth2 # Create two veths: veth1, veth2
 # if_rename veth2 veth0
 ```
@@ -300,19 +305,19 @@ ns_runsh ns1 [shell]
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # ns_add ns1 ns2      # Add two namespafes: ns1, ns2
 adding ns1
 adding ns2
 # ns_runsh ns1
 # ns_where
 ns_where: command not found
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # ns_where
 ns1
 # exit
 # ns_runsh ns2 tcsh
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 /usr/bin/.: Permission denied.
 # ip netns identify
 ns2
@@ -327,7 +332,7 @@ vrf_add vrf table_id
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vrf_add vrf_blue 10
 #
 ```
@@ -338,7 +343,7 @@ vrf_del vrf
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vrf_del vrf_blue
 #
 ```
@@ -349,7 +354,7 @@ vrf_add_if vrf interface
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vrf_add vrf_blue 10
 # vrf_add_if vrf_blue eth1
 ```
@@ -360,7 +365,7 @@ vrf_del_if interface
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vrf_add vrf_blue 10
 # vrf_add_if vrf_blue eth1
 # ip link show eth1
@@ -382,7 +387,7 @@ Return 0 if success. Return 1 otherwise.
 
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vrf_add vrf_blue 10
 # vrf_get_tid vrf_blue
 10
@@ -400,7 +405,7 @@ List VRFs.
 
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vrf_add vrf_blue 10
 # vrf_add vrf_red 20
 # vrf_add_if vrf_blue eth1
@@ -423,7 +428,7 @@ List the interfaces that belong to a VRF.
 
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vrf_add vrf_blue 10
 # vrf_add_if vrf_blue eth1
 # ip addr add 1.2.3.4/24 dev eth1
@@ -438,7 +443,7 @@ vrf_show_tid
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vrf_add vrf_blue 10
 # vrf_add_vrf_red 20
 # vrf_show_tid
@@ -447,13 +452,48 @@ vrf_red 20
 #
 ```
 
+### **vlan_add** -- Create a VLAN interface
+```
+vlan_add interface vlan_id
+```
+Example:
+```
+# . ./ns-funcs.sh
+# vif_add veth0 veth1
+# ip -br a | grep veth0
+veth1@veth0      UP             fe80::d85b:deff:fe0f:d7cc/64
+veth0@veth1      UP             fe80::601d:4ff:fee2:16d7/64
+# vlan_add veth0 100
+# ip -br a | grep veth0
+veth1@veth0      UP             fe80::d85b:deff:fe0f:d7cc/64
+veth0@veth1      UP             fe80::601d:4ff:fee2:16d7/64
+veth0.100@veth0  UP             fe80::601d:4ff:fee2:16d7/64
+#
+```
+
+### **vlan_del** -- Remove a VLAN interface
+```
+vlan_del interface vlan_id
+```
+Example:
+```
+# . ./ns-funcs.sh
+# ip -br a | grep veth0
+veth1@veth0      UP             fe80::d85b:deff:fe0f:d7cc/64
+veth0@veth1      UP             fe80::601d:4ff:fee2:16d7/64
+veth0.100@veth0  UP             fe80::601d:4ff:fee2:16d7/64
+# vlan_del veth0 100
+# ip -br a | grep veth0
+veth1@veth0      UP             fe80::d85b:deff:fe0f:d7cc/64
+veth0@veth1      UP             fe80::601d:4ff:fee2:16d7/64
+```
 ### **vif_add** -- Create a pair of veth interfaces
 ```
 vif_add veth_name veth_name
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vif_add veth1 veth2
 #
 ```
@@ -464,7 +504,7 @@ vif_add_pair if1 if2
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vif_add_pair if1 if2
 # ip link | grep if1
 7: if2-if1@if1-if2: ...
@@ -481,7 +521,7 @@ interface has the peer.
 
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vif_del veth1
 #
 ```
@@ -492,7 +532,7 @@ vif_peer_index interface
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # vif_add veth1 veth2
 # vif_peer_index veth1
 6
@@ -503,11 +543,11 @@ Example:
 
 ### **if_exists** -- Return 0 if interface exists; return 1 otherwise
 ```
-if_exists eth0
+if_exists interface
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # if_exists eth0
 # echo $?
 0
@@ -518,13 +558,83 @@ Device "foo" does not exist.
 #
 ```
 
+### **if_up** -- Bring up a network interface
+```
+if_up interface
+```
+Example:
+```
+# . ./ns-funcs.sh
+# ip -br a | grep veth0
+veth1@veth0      LOWERLAYERDOWN fe80::70cd:d3ff:fe78:a0b8/64
+veth0@veth1      DOWN
+# if_up veth0
+# echo $?
+0
+# ip -br a | grep veth0
+veth1@veth0      UP             fe80::70cd:d3ff:fe78:a0b8/64
+veth0@veth1      UP             fe80::6427:51ff:fe30:d305/64
+# if_up foo
+Cannot find device "foo"
+# echo $?
+1
+#
+```
+
+### **if_down** -- Take down a network interface
+```
+if_down interface
+```
+Example:
+```
+# . ./ns-funcs.sh
+# ip -br a | grep veth0
+veth1@veth0      UP             fe80::70cd:d3ff:fe78:a0b8/64
+veth0@veth1      UP             fe80::6427:51ff:fe30:d305/64
+# if_down veth0
+# echo $?
+0
+# ip -br a | grep veth0
+veth1@veth0      LOWERLAYERDOWN fe80::70cd:d3ff:fe78:a0b8/64
+veth0@veth1      DOWN
+# if_up foo
+Cannot find device "foo"
+# echo $?
+1
+#
+```
+
+### **if_change** -- Bring up or take down a network interface
+```
+if_change interface <up | down>
+```
+Example:
+```
+# . ./ns-funcs.sh
+# ip -br a | grep veth0
+veth1@veth0      UP             fe80::70cd:d3ff:fe78:a0b8/64
+veth0@veth1      UP             fe80::6427:51ff:fe30:d305/64
+# if_change veth0 down
+# echo $?
+0
+# ip -br a | grep veth0
+veth1@veth0      LOWERLAYERDOWN fe80::70cd:d3ff:fe78:a0b8/64
+veth0@veth1      DOWN
+# if_change veth0 up
+# echo $?
+0
+# ip -br a | grep veth0
+veth1@veth0      UP             fe80::70cd:d3ff:fe78:a0b8/64
+veth0@veth1      UP             fe80::6427:51ff:fe30:d305/64
+```
+
 ### **if_get_master** -- Output the master interface name if it exists
 ```
 if_get_master eth1
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # br_add br1
 # vif_add_pair ns1 br1
 # br_add_if br1 br1-ns1
@@ -547,7 +657,7 @@ if_set_master br1 eth1
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # br_add br1
 # vif_add_pair ns1 br1
 # if_set_master br1 br1-ns1
@@ -570,7 +680,7 @@ if_unset_master eth1 eth2
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # br_add br1
 # vif_add_pair ns1 br1
 # if_set_master br1 br1-ns1
@@ -612,7 +722,7 @@ Assume you want to create the following network.
 ```
 Type the following commands.
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # ns_add ns1 ns2                          # Add two namespafes: ns1, ns2
 adding ns1
 adding ns2
@@ -648,7 +758,7 @@ pci2if pci_address
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # pci2if 00:08.0
 enp0s8
 #
@@ -660,7 +770,7 @@ addFromPrefix ip_prefix
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # addFromPrefix 1.2.3.4/24
 1.2.3.4
 
@@ -675,7 +785,7 @@ lenFromPrefix ip_prefix
 ```
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # lenFromPrefix 1.2.3.4/24
 24
 
@@ -693,7 +803,7 @@ directories if it is necessary to go to the specified directory.
 
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # cd /tmp
 # changeDir foo/bar
 # pwd
@@ -710,7 +820,7 @@ directories if it is necessary to make the specified directory.
 
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # cd /tmp
 # makeeDir foo/bar/baz
 # pwd
@@ -731,7 +841,7 @@ the input is a single digit number
 
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # prependZero 1
 01
 # prependZero 100
@@ -750,7 +860,7 @@ exit code. The exit code is 1 unless it is specified.
 
 Example:
 ```
-# . ./namespace-shell-funcs
+# . ./ns-funcs.sh
 # errExit "This should not happen" 10
 ERROR: This should not happen
 exit
