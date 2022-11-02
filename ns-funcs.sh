@@ -83,7 +83,9 @@ ns_add_if () {
     ns=$1
     intf=$2
     ip link set $intf netns $ns up || _rc=$?
-    ip netns exec $ns ifconfig lo 127.0.0.1/8 up || _rc=$?
+    ip netns exec $ns ip link set dev lo up || _rc=$?
+    #ip netns exec $ns ip addr add 127.0.0.1/8 dev lo || _rc=$?
+    #ip netns exec $ns ip -6 addr add ::1/128 dev lo
   else
     echo 'Usage: ns_add_if <namespace> <interface>' 1>&2
     _rc=1
@@ -325,7 +327,7 @@ vif_add () {
           do
             ip link set $intf up || _rc2=$?
             if [ $_rc -ne 0 ]; then
-              echo "vif_add(): Error: failed to set link up ($intf)" 1>&2
+              echo "vif_add: Error: failed to set link up ($intf)" 1>&2
               _rc=1
             fi
           done
@@ -355,10 +357,10 @@ vif_del () {
     if [ -d /sys/devices/virtual/net/$1 ]; then
       ip link del $1 || _rc=1
       if [ $_rc -ne 0 ]; then
-        echo "vif_del(): Error: failed to delete $1" 1>&2
+        echo "vif_del: Error: failed to delete $1" 1>&2
       fi
     else
-      echo "vif_del(): Error: $1 does not exist" 1>&2
+      echo "vif_del: Error: $1 does not exist" 1>&2
     fi
   else
     echo 'Usage: vif_del <veth>' 1>&2
@@ -482,6 +484,44 @@ ns_flush_ifaddr () {
   return $_rc
 }
 
+#
+# ns_add_vlan: Add a VLAN interface to a namespace
+#
+#  ns_add_vlan ns1 veth1 1001
+#
+ns_add_vlan () {
+  _rc=1
+  if [ $# -ge 3  ]; then
+    ip netns exec $1 ip link add link $2 name ${2}.$3 type vlan id $3
+    if [ $? -eq 0 ]; then
+      ip netns exec $1 ip link set dev ${2}.$3 up
+      _rc=$?
+    fi
+  else
+    echo 'Usage: ns_add_vlan <namespace> <intferface> <vlan_id>' 1>&2
+  fi
+  return $_rc
+}
+
+#
+# ns_vlan_del: Delete a VLAN interface from a namespace
+#
+#   ns_del_vlan ns1 veth1 1001
+#
+ns_del_vlan () {
+  _rc=1
+  if [ $# -ge 3 ]; then
+    ip netns exec $1 ip link set dev ${2}.$3 down
+    if [ $? -eq 0 ]; then
+      ip netns exec $1 ip link delete ${2}.$3
+      _rc=$?
+    fi
+  else
+    echo 'Usage: ns_del_vlan <namespace> <intferface> <vlan_id>' 1>&2
+  fi
+  return $_rc
+}
+
 # ns_exec: Execute a command in the specified namespace
 #
 #  ns_exec ns1 cmd [...]
@@ -524,7 +564,7 @@ ns_runsh () {
     fi
     ip netns exec $ns $shell || _rc=$?
   else
-    echo 'ns_runsh: Usage: ns_runsh <namespace> [shell]' 1>&2
+    echo 'Usage: ns_runsh <namespace> [shell]' 1>&2
     _rc=1
   fi
 
@@ -538,6 +578,71 @@ ns_runsh () {
 #
 ns_where () {
   ip netns identify
+}
+
+#
+# ns_exists: Return 0 if the specified namespace exists
+#
+#  ns_exists ns
+#
+ns_exists () {
+  if [ $# -lt 1 ]; then
+    echo "Usage: ns_exists ns:" 1>&2
+    return 1
+  fi
+  if [ -f /var/run/netns/$1 ]; then
+    return 0
+  fi
+  return 1
+}
+
+#
+# ns_set_ipv4_fwrd: Enable/disable IPv4 forwarding
+#
+#   ns_set_ipv4_fwrd ns <enable|disable>
+#
+ns_set_ipv4_fwrd () {
+  if [ $# -lt 2 ]; then
+    echo "Usage: ns_set_ipv4_fwrd ns <enable|disable>" 1>&2
+    return 1
+  fi
+  case $2 in
+  d*) _val=0
+      ;;
+  e*) _val=1
+      ;;
+  *)  echo "Usage: ns_set_ipv4_fwrd ns <enable|disable>" 1>&2
+      return 1
+      ;;
+  esac
+  _cmd="ip netns exec $1"
+  $_cmd sh -c "/bin/echo $_val > /proc/sys/net/ipv4/ip_forward"
+}
+
+#
+# ns_disable_ipv4_fwrd: Disable IPv4 forwarding
+#
+#   ns_disable_ipv4_fwrd ns
+#
+ns_disable_ipv4_fwrd () {
+  if [ $# -lt 1 ]; then
+    echo "Usage: ns_disable_ipv4_fwrd ns" 1>&2
+    return 1
+  fi
+  ns_set_ipv4_fwrd $1 disable
+}
+
+#
+# ns_enable_ipv4_fwrd: Enable IPv4 forwarding
+#
+#   ns_enable_ipv4_fwrd ns
+#
+ns_enable_ipv4_fwrd () {
+  if [ $# -lt 1 ]; then
+    echo "Usage: ns_disable_ipv4_fwrd ns" 1>&2
+    return 1
+  fi
+  ns_set_ipv4_fwrd $1 enable
 }
 
 #
@@ -811,8 +916,8 @@ br_add () {
     for br in $*
     do
       if ! ip link show "$br" > /dev/null 2>&1 ; then
-        if brctl addbr "$br" ; then
-          ifconfig $br up
+        if ip link add "$br" type bridge vlan_filtering 1 ; then
+          ip link set dev $br up
         else
           _rc=1
           echo "br_add: Error: failed to add bridge $br" 1>&2
@@ -848,8 +953,8 @@ br_del () {
     for br in $*
     do
       if ip link show "$br" > /dev/null 2>&1 ; then
-        ifconfig "$br" down
-        if ! brctl delbr "$br" ; then
+        ip link set dev "$br" down
+        if ! ip link del "$br" ; then
           _rc=1
           echo "br_del: failed to delete bridge $br" 1>&2
         fi
@@ -867,19 +972,16 @@ br_del () {
 }
 
 #
-# br_add_if: Add an interface to a bridge
+# br_addif: Add an interface to a bridge
 #
-#  br_add_if br1 intf
+#  br_addif br1 intf
 #
 br_addif () {
   _rc=0
   if [ $# -ge 2 ]; then
-    brctl addif "$1" "$2" || _rc=1
+    ip link set "$2" master "$1" || _rc=1
     if [ $_rc -ne 0 ]; then
-      if ! brctl addif "$1" "$2" 2>&1 | \
-          grep 'already a member of a bridge' > /dev/null ; then
-        echo "br_addif(): Error: failed to add interface $2 to bridge $1" 1>&2
-      fi
+        echo "br_addif: Error: failed to add interface $2 to bridge $1" 1>&2
     fi
   else
     echo 'Usage: br_addif <bridge> <interface>' 1>&2
@@ -892,16 +994,16 @@ br_add_if() {
 }
 
 #
-# br_del_if: Delete an interface from a bridge
+# br_delif: Delete an interface from a bridge
 #
-#  br_del_if br1 intf
+#  br_delif br1 intf
 #
 br_delif () {
   _rc=0
   if [ $# -ge 2 ]; then
     brctl delif "$1" "$2" || _rc=1
     if [ $_rc -ne 0 ]; then
-      echo "br_delif(): Error: failed to delete intf $2 from bridge $1" 1>&2
+      echo "br_delif: Error: failed to delete intf $2 from bridge $1" 1>&2
     fi
   else
     echo 'Usage: br_delif <bridge> <interface>' 1>&2
@@ -911,6 +1013,94 @@ br_delif () {
 }
 br_del_if () {
   br_delif $*
+}
+
+#
+# br_set_access_port: Make a bridge interface an access port
+#
+#  br_set_access_port veth0 1001 [force]
+#
+br_set_access_port() {
+  if [ $# -lt 2 ]; then
+    echo "Usage: br_set_access_port intf VLAN_ID" 1>&2
+    return 1
+  fi
+  if ! ip a s $1 | grep master > /dev/null ; then
+    echo "br_set_access_port: ERRROR: $1 must belong to a bridge" 1>&2
+    return 1
+  fi
+  #
+  # count VLAN_IDs, remove blank lines.
+  #
+  _n=`bridge vlan show dev $1 | sed -r '/^\s*$/d' | wc -l`
+  if [ $# -eq 2 ]; then
+    if [ $_n -eq 2 ]; then
+      bridge vlan add dev $1 vid $2 pvid untagged
+      _rc=$?
+    else
+      _rc=1
+      echo "br_set_access_port: ERROR: already configured" 1>&2
+      bridge vlan show dev $1 | sed -r '/^\s*$/d' 1>&2
+    fi
+  else
+    #
+    # force to add VLAN_ID
+    #
+    bridge vlan add dev $1 vid $2 pvid untagged
+    _rc=$?
+  fi
+  return $_rc
+}
+
+#
+# br_add_vlan_trunk: Add a VLAN to a trunk port
+#
+#  br_add_vlan_trunk veth0 1001
+#
+br_add_vlan_trunk() {
+  if [ $# -lt 2 ]; then
+    echo "Usage: br_add_vlan_trunk intf VLAN_ID" 1>&2
+    return 1
+  fi
+  if ! ip a s $1 | grep master > /dev/null ; then
+    echo "br_add_vlan_trunk: ERRROR: $1 must belong to a bridge" 1>&2
+    return 1
+  fi
+  bridge vlan add dev $1 vid $2
+}
+
+#
+# br_add_native_vlan: Add a native VLAN to a trunk port
+#
+#  br_add_native_vlan veth0 1001
+#
+br_add_native_vlan() {
+  if [ $# -lt 2 ]; then
+    echo "Usage: br_add_native_vlan intf VLAN_ID" 1>&2
+    return 1
+  fi
+  if ! ip link show $1 | grep master > /dev/null ; then
+    echo "br_add_native_vlan: ERRROR: $1 must belong to a bridge" 1>&2
+    return 1
+  fi
+  bridge vlan add dev $1 vid $2 pvid untagged
+}
+
+#
+# br_del_vlan: Remove a VLAN_ID from a bridge interface
+#
+#  br_del_vlan veth0 1001
+#
+br_del_vlan() {
+  if [ $# -lt 2 ]; then
+    echo "Usage: br_del_vlan intf VLAN_ID" 1>&2
+    return 1
+  fi
+  if ! ip link show $1 | grep master > /dev/null ; then
+    echo "br_del_vlan: ERRROR: $1 must belong to a bridge" 1>&2
+    return 1
+  fi
+  bridge vlan del vid $2 dev $1
 }
 
 #
