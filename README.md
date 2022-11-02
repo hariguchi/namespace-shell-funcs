@@ -9,10 +9,16 @@ A set of shell functions working with Linux Namespace
 * **ns_add_ifaddr**:   Attach an IPv4/IPv6 address to the specified interface and namespace
 * **ns_del_ifaddr**:   Detach an IPv4/IPv6 address from the specified interface and namespace
 * **ns_flush_ifaddr**: Delete all IPv4/IPv6 addresses from the interface in the specified namespace
+* **ns_add_vlan**:     Add a VLAN interface to a namespace
+* **ns_del_vlan**:     Delete a VLAN interface from a namespace
 * **ns_exec**:         Execute a command in the specified namespace
 * **ns_list**:         Show all the existing namespaces
 * **ns_runsh**:        Run a shell in the given namespace
 * **ns_where**:        Show the namespace in which the shell is running
+* **ns_exists**:       Return 0 if the specified namespace exists
+* **ns_set_ipv4_fwrd**: Enable/disable IPv4 forwarding
+* **ns_disable_ipv4_fwrd**: Disable IPv4 forwarding
+* **ns_enable_ipv4_fwrd**: Enable IPv4 forwarding
 * **vrf_add**:         create a VRF
 * **vrf_del**:         Delete a VRF
 * **vrf_add_if**:      Add an interface to a VRF
@@ -43,6 +49,10 @@ A set of shell functions working with Linux Namespace
 * **br_del**:          Delete kernel bridge(s)
 * **br_add_if**:       Add an interface to a bridge
 * **br_del_if**:       Delete an interface from a bridge
+* **br_add_native_vlan**: Add a native VLAN to a trunk port
+* **br_add_vlan_trunk**: Add a VLAN to a trunk port
+* **br_del_vlan**:     Delete a VLAN ID from a bridge interface
+* **br_set_access_port**: Make a bridge interface an access port
 * **pci2if**:          Convert pci address to interface name
 * **addrFromPrefix**   Output IP address from IP prefix
 * **lenFromPrefix**    Output prefix length from IP prefix
@@ -184,6 +194,44 @@ veth1     Link encap:Ethernet  HWaddr 52:6b:d7:8e:78:7e
           RX bytes:4824 (4.8 KB)  TX bytes:5212 (5.2 KB)
 ```
 
+### **ns_add_vlan** -- Add a VLAN interface to a namespace
+```
+ns_add_vlan namespace intferface vlan_id
+```
+Example:
+```
+# . ./ns-funcs.sh
+# ns_add ns1             # Add namespace: ns1
+adding ns1
+# vif_add veth01 veth10  # Add veth pair: veth01 -- veth10
+# ns_add_if ns1 veth01   # Add veth01 to ns1
+# ip netns exec ns1 ip -br a
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+veth01@if4       UP             fe80::e457:d1ff:fec4:f0bd/64
+# ns_add_vlan ns1 veth01 1001
+# ip netns exec ns1 ip -br a
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+veth01.1001@veth01 UP             fe80::e457:d1ff:fec4:f0bd/64
+veth01@if4       UP             fe80::e457:d1ff:fec4:f0bd/64
+```
+
+### **ns_del_vlan** -- Delete a VLAN interface from a namespace
+```
+ns_del_vlan namespace intferface vlan_id
+```
+Example:
+```
+# . ./ns-funcs.sh
+# ip netns exec ns1 ip -br a
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+veth01.1001@veth01 UP             fe80::e457:d1ff:fec4:f0bd/64
+veth01@if4       UP             fe80::e457:d1ff:fec4:f0bd/64
+# ns_del_vlan ns1 veth01 1001
+# ip netns exec ns1 ip -br a
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+veth01@if4       UP             fe80::e457:d1ff:fec4:f0bd/64
+```
+
 ### **ns_exec** -- Execute a command in the specified namespace
 ```
 ns_exec namespace cmd [...]
@@ -191,7 +239,7 @@ ns_exec namespace cmd [...]
 Example:
 ```
 # . ./ns-funcs.sh
-# ns_add ns1 ns2      # Add two namespafes: ns1, ns2
+# ns_add ns1 ns2      # Add two namespaces: ns1, ns2
 adding ns1
 adding ns2
 # vif_add veth1 veth2 # Create two veths: veth1, veth2
@@ -297,6 +345,60 @@ ns_list
 ### **ns_where** -- Show the namespace in which the shell is running
 ```
 ns_where
+```
+
+### **ns_exists** -- Return 0 if the specified namespace exists
+```
+ns_exists namespace
+```
+Example:
+```
+# . ./ns-funcs.sh
+# ns_add ns1 # Add namespace: ns1
+adding ns1
+# ns_exists ns1 && echo yes
+yes
+# ns_exists ns2 && echo yes
+# ns_exists ns2 || echo no
+no
+```
+
+### **ns_set_ipv4_fwrd** -- Enable/disable IPv4 forwarding
+```
+ns_set_ipv4_fwrd namespace enable|disable
+```
+Example:
+```
+# . ./ns-funcs.sh
+# ns_add ns1 # Add namespace: ns1
+adding ns1
+# ip netns exec ns1 cat /proc/sys/net/ipv4/ip_forward
+0
+# ns_set_ipv4_fwrd ns1 enable
+# ip netns exec ns1 cat /proc/sys/net/ipv4/ip_forward
+1
+# ns_set_ipv4_fwrd ns1 disable
+# ip netns exec ns1 cat /proc/sys/net/ipv4/ip_forward
+0
+```
+
+### **ns_disable_ipv4_fwrd** -- Disable IPv4 forwarding
+```
+ns_disable_ipv4_fwrd namespace
+```
+Example:
+```
+# . ./ns-funcs.sh
+# ns_add ns1 # Add namespace: ns1
+adding ns1
+# ip netns exec ns1 cat /proc/sys/net/ipv4/ip_forward
+0
+# ns_enable_ipv4_fwrd ns1
+# ip netns exec ns1 cat /proc/sys/net/ipv4/ip_forward
+1
+# ns_disable_ipv4_fwrd ns1
+# ip netns exec ns1 cat /proc/sys/net/ipv4/ip_forward
+0
 ```
 
 ### **ns_runsh** -- Run a shell in the given namespace
@@ -750,6 +852,76 @@ rtt min/avg/max/mdev = 0.039/0.042/0.049/0.008 ms
 ### **br_del_if** -- Delete an interface from a bridge
 ```
 br_del_if bridge interface
+```
+
+### **br_add_native_vlan** -- Add a native VLAN to a trunk port
+```
+br_add_native_vlan intf VLAN_ID
+```
+Example:
+```
+# . ./ns-funcs.sh
+# br_add br0
+# br_add_if br0 eth2
+# br_add_native_vlan eth2 2001
+# bridge vlan
+port            vlan-id
+eth2            1 Egress Untagged
+                2001 PVID Egress Untagged
+br0             1 PVID Egress Untagged
+```
+
+### **br_add_vlan_tunk** -- Add a VLAN to a trunk port
+```
+br_add_vlan_trunk intf VLAN_ID
+```
+Example:
+```
+# . ./ns-funcs.sh
+# br_add br0
+# br_add_if br0 eth2
+# br_add_vlan_trunk eth2 2001
+# bridge vlan
+port             vlan-id
+veth2            1 Egress Untagged
+                 2001
+br0              1 PVID Egress Untagged
+```
+
+### **br_del_vlan** -- Delete a VLAN from a bridge interface
+```
+br_del_vlan intf VLAN_ID
+```
+Example:
+```
+# bridge vlan show dev veth01
+port              vlan-id
+br0               1 PVID Egress Untagged
+veth01            1 PVID Egress Untagged
+                  1001
+                  2002
+# br_del_vlan veth01 1001
+# bridge vlan show dev veth01
+port              vlan-id
+br0               1 PVID Egress Untagged
+veth01            1 PVID Egress Untagged
+                  2002
+```
+
+### **br_set_access_port** -- Make a bridge interface an access port
+```
+br_
+```
+Example:
+```
+# . ./ns-funcs.sh
+# br_add br0
+# br_add_if br0 eth2
+# br_set_access_port eth2 2001
+# bridge vlan show dev eth2
+port             vlan-id
+veth2            1 Egress Untagged
+                 2001 PVID Egress Untagged
 ```
 
 ### **pci2if** -- Convert pci address to interface name
