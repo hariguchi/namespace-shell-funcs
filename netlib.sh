@@ -187,3 +187,94 @@ v4toInt () {
   _4=`echo $1 | cut -d . -f 4`
   echo `expr \( 16777216 \* $_1 \) + \( 65536 \* $_2 \) + \( 256 \* $_3 \) + $_4`
 }
+
+##
+## pl2mask <IPv4-prefix-length>
+##
+pl2mask () {
+  local _head
+  local _max
+  local _n
+  local _pl
+  local _tail
+
+  if [ $# -lt 1 ]; then
+    echo 'Usage: pl2mask <prefix-length>' 1>&2
+    return 1
+  fi
+  _pl=$1
+  if [ $_pl -gt 32 ]; then
+    return 1
+  fi
+  if [ $_pl -gt 24 ]; then
+    _max=32
+    _head='255.255.255.'
+  elif [ $_pl -gt 16 ]; then
+    _max=24
+    _head='255.255.'
+    _tail='.0'
+  elif [ $_pl -gt 8 ]; then
+    _max=16
+    _head='255.'
+    _tail='.0.0'
+  else
+    _max=8
+    _tail='255.255.0'
+  fi
+  _n=`echo "256 - 2^(${_max}-${_pl})" | bc`
+  if [ $? != 0 ]; then
+    return 1
+  fi
+  echo ${_head}${_n}${_tail}
+}
+
+##
+## mask2pl <IPv4-netmask>
+##
+mask2pl () {
+  if [ $# -lt 1 ]; then
+    echo 'Usage: mask2pl <netmask>' 1>&2
+    return 1
+  fi
+  echo $1 | awk -F'.' '{ \
+    if (NF != 4) { \
+      print "ERROR: wrong input:" $0 | "cat 1>&2"; exit 1\
+    } else {\
+      input = $0; \
+      if ($1 == 255 && $2 == 255 && $3 == 255) {\
+        a = 24; b = $4\
+      } else if ($1 == 255 && $2 == 255) {\
+        a = 16; b = $3\
+      } else if ($1 == 255) {\
+        a = 8; b = $2\
+      } else {\
+        a = 0; b = $1\
+      }\
+    }\
+  } END { \
+    if (NR > 1) {\
+      print "ERROR: too many lines" | "cat 1>&2"; exit 1\
+    }\
+    if (b == 255) {\
+      print a + 8\
+    } else if (b == 254) {\
+      print a + 7\
+    } else if (b == 252) {\
+      print a + 6\
+    } else if (b == 248) {\
+      print a + 5\
+    } else if (b == 240) {\
+      print a + 4\
+    } else if (b == 224) {\
+      print a + 3\
+    } else if (b == 192) {\
+      print a + 2\
+    } else if (b == 128) {\
+      print a + 1\
+    } else if (b == 0) {\
+      print a\
+    } else {\
+      print "ERROR: wrong input" input | "cat 1>&2" ; exit 1\
+    }\
+  }'
+}
